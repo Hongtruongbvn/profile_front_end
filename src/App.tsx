@@ -55,10 +55,10 @@ interface ProjectImage {
 }
 
 const SUGGESTED_QUESTIONS: string[] = [
-  "Cho mình xem chi tiết dự án Mầm non",
-  "Trình chiếu ảnh dự án Social Network",
-  "Dự án Bus Ticket có giao diện như thế nào?",
-  "Tải CV Phạm Hồng Trưởng"
+  "Tải CV của anh Trưởng về máy",
+  "Kinh nghiệm làm việc của bạn thế nào?",
+  "Các dự án nổi bật của bạn là gì?",
+  "Bạn có kinh nghiệm với NestJS và React không?"
 ];
 
 export default function App() {
@@ -81,9 +81,10 @@ export default function App() {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Cấu hình cứng API tĩnh kết nối Backend
-  const downloadCvUrl = 'https://profile-back-end.onrender.com/public/CV_PhamHongTruong.pdf';
-  const backendUrl = 'https://profile-back-end.onrender.com/chat';
+  // Đường link tĩnh để tải file CV PDF từ Backend NestJS
+  const downloadCvUrl = 'http://localhost:3000/public/CV_PhamHongTruong.pdf';
+  // Địa chỉ backend cứng, loại bỏ cấu hình thủ công trên UI để bảo mật và sạch sẽ
+  const backendUrl = 'http://localhost:3000/chat';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
