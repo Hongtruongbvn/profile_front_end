@@ -64,9 +64,9 @@ export default function App() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // Đường link tĩnh để tải file CV PDF từ Backend NestJS
-  const downloadCvUrl = 'http://localhost:3000/public/CV_PhamHongTruong.pdf';
+  const downloadCvUrl = 'https://profile-back-end.onrender.com/public/CV_PhamHongTruong.pdf';
   // Địa chỉ backend cứng, loại bỏ cấu hình thủ công trên UI để bảo mật và sạch sẽ
-  const backendUrl = 'http://localhost:3000/chat';
+  const backendUrl = 'https://profile-back-end.onrender.com/chat';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
