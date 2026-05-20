@@ -14,12 +14,10 @@ import {
   Download,
   Phone,
   MapPin,
-  ExternalLink,
   ChevronLeft,
   Maximize2,
   Eye,
   Layers,
-  Code
 } from 'lucide-react';
 
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = "" }) => (
