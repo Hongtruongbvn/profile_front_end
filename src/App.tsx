@@ -11,7 +11,14 @@ import {
   Info,
   X,
   FileText,
-  Download
+  Download,
+  Phone,
+  MapPin,
+  ExternalLink,
+  ChevronLeft,
+  Maximize2,
+  Eye,
+  Layers
 } from 'lucide-react';
 
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = "" }) => (
@@ -40,11 +47,18 @@ interface Message {
   isError?: boolean;
 }
 
+// Cấu trúc thông tin ảnh cho Live Box của từng dự án
+interface ProjectImage {
+  url: string;
+  title: string;
+  fallbackSvg: React.ReactNode;
+}
+
 const SUGGESTED_QUESTIONS: string[] = [
-  "Tải CV của anh Trưởng về máy",
-  "Kinh nghiệm làm việc của bạn thế nào?",
-  "Các dự án nổi bật của bạn là gì?",
-  "Bạn có kinh nghiệm với NestJS và React không?"
+  "Cho mình xem chi tiết dự án Mầm non",
+  "Trình chiếu ảnh dự án Social Network",
+  "Dự án Bus Ticket có giao diện như thế nào?",
+  "Tải CV Phạm Hồng Trưởng"
 ];
 
 export default function App() {
@@ -52,7 +66,7 @@ export default function App() {
     { 
       id: 1, 
       role: 'assistant', 
-      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã đọc toàn bộ dữ liệu từ file CV PDF của anh Trưởng. Bạn có thể đặt câu hỏi về kinh nghiệm, dự án hoặc yêu cầu tôi cung cấp liên kết để tải trực tiếp CV của anh ấy về máy nhé!',
+      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về 3 dự án lớn: Mầm non, Social Network, Bus Ticket để tôi trình chiếu ảnh giao diện (Live Box) thực tế cho bạn xem nhé!',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -61,12 +75,15 @@ export default function App() {
   const [corsErrorOccurred, setCorsErrorOccurred] = useState<boolean>(false);
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
   
+  // Trạng thái Lightbox phóng to ảnh
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxTitle, setLightboxTitle] = useState<string>('');
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Đường link tĩnh để tải file CV PDF từ Backend NestJS
-  const downloadCvUrl = 'http://localhost:3000/public/CV_PhamHongTruong.pdf';
-  // Địa chỉ backend cứng, loại bỏ cấu hình thủ công trên UI để bảo mật và sạch sẽ
-  const backendUrl = 'http://localhost:3000/chat';
+  // Cấu hình cứng API tĩnh kết nối Backend
+  const downloadCvUrl = 'https://profile-back-end.onrender.com/public/CV_PhamHongTruong.pdf';
+  const backendUrl = 'https://profile-back-end.onrender.com/chat';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -80,7 +97,6 @@ export default function App() {
     const text = textToSend || inputMessage.trim();
     if (!text || isLoading) return;
 
-    // Tạo tin nhắn của người dùng
     const userMsgId = Date.now();
     const newUserMessage: Message = {
       id: userMsgId,
@@ -149,6 +165,210 @@ export default function App() {
     setShowClearConfirm(false);
   };
 
+  // 1. ĐỊNH NGHĨA DANH SÁCH ẢNH VÀ FALLBACK CHO TỪNG DỰ ÁN
+  const PROJECT_GALLERIES: Record<string, ProjectImage[]> = {
+    project1: [
+      {
+        url: 'https://profile-back-end.onrender.com/public/project1/1.png',
+        title: 'Bảng Điều Khiển Quản Trị (Admin Dashboard)',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-pink-900/30 to-rose-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <Layers className="w-8 h-8 text-rose-400 mb-2" />
+            <span className="text-[11px] font-bold text-rose-200">Kindergarten Admin Dashboard</span>
+            <span className="text-[9px] text-rose-400 mt-1">Quản lý lớp học, lịch trực và thống kê học phí</span>
+          </div>
+        )
+      },
+      {
+        url: 'https://profile-back-end.onrender.com/public/project1/2.png',
+        title: 'Màn hình Quản Lý Giáo Viên & Học Sinh',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-orange-900/30 to-amber-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <User className="w-8 h-8 text-amber-400 mb-2" />
+            <span className="text-[11px] font-bold text-amber-200">Teacher & Student Directory</span>
+            <span className="text-[9px] text-amber-400 mt-1">Hồ sơ sức khỏe, chuyên môn và theo dõi chuyên cần</span>
+          </div>
+        )
+      },
+      {
+        url: 'https://profile-back-end.onrender.com/public/project1/3.png',
+        title: 'Cổng Giám Sát Camera Trực Tuyến',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-red-900/30 to-pink-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <Eye className="w-8 h-8 text-pink-400 mb-2" />
+            <span className="text-[11px] font-bold text-pink-200">Live CCTV Monitor & Payment Gateway</span>
+            <span className="text-[9px] text-pink-400 mt-1">Giám sát camera trực tiếp và tích hợp thanh toán học phí online</span>
+          </div>
+        )
+      }
+    ],
+    project2: [
+      {
+        url: 'https://profile-back-end.onrender.com/public/project2/1.png',
+        title: 'Bảng Tin Chia Sẻ Hoạt Động (Social Newsfeed)',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-indigo-900/30 to-blue-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <Sparkles className="w-8 h-8 text-indigo-400 mb-2" />
+            <span className="text-[11px] font-bold text-indigo-200">Interactive Social Newsfeed</span>
+            <span className="text-[9px] text-indigo-400 mt-1">Chia sẻ trạng thái, tương tác cảm xúc, bình luận thời gian thực</span>
+          </div>
+        )
+      },
+      {
+        url: 'https://profile-back-end.onrender.com/public/project2/2.png',
+        title: 'Hệ Thống Phòng Chat Nhóm (Discord-style Guilds)',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-purple-900/30 to-indigo-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <Bot className="w-8 h-8 text-purple-400 mb-2" />
+            <span className="text-[11px] font-bold text-purple-200">Guild Voice & Text Channels</span>
+            <span className="text-[9px] text-purple-400 mt-1">Phân quyền vai trò, chat nhóm thời gian thực qua socket</span>
+          </div>
+        )
+      },
+      {
+        url: 'https://profile-back-end.onrender.com/public/project2/3.png',
+        title: 'Giao Diện Thiết Bị Di Động (React Native Client)',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-cyan-900/30 to-blue-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <Phone className="w-8 h-8 text-cyan-400 mb-2" />
+            <span className="text-[11px] font-bold text-cyan-200">Responsive Mobile App UI</span>
+            <span className="text-[9px] text-cyan-400 mt-1">Trải nghiệm ứng dụng di động mượt mà với thông báo đẩy</span>
+          </div>
+        )
+      }
+    ],
+    project3: [
+      {
+        url: 'https://profile-back-end.onrender.com/public/project3/1.png',
+        title: 'Hệ Thống Đặt Vé & Sơ Đồ Chọn Ghế Ngồi',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-teal-900/30 to-emerald-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <Layers className="w-8 h-8 text-teal-400 mb-2" />
+            <span className="text-[11px] font-bold text-teal-200">Seat Map Selection & Booking</span>
+            <span className="text-[9px] text-teal-400 mt-1">Chọn vị trí ngồi trực quan trên xe, tính giá vé khứ hồi tự động</span>
+          </div>
+        )
+      },
+      {
+        url: 'https://profile-back-end.onrender.com/public/project3/2.png',
+        title: 'Trình Quản Lý Phương Tiện, Tuyến Đường & Tài Xế',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-emerald-900/30 to-green-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <MapPin className="w-8 h-8 text-emerald-400 mb-2" />
+            <span className="text-[11px] font-bold text-emerald-200">Route & Fleet Operations</span>
+            <span className="text-[9px] text-emerald-400 mt-1">Phân bổ lộ trình, giám sát thiết bị định vị xe chạy và lịch trình</span>
+          </div>
+        )
+      },
+      {
+        url: 'https://profile-back-end.onrender.com/public/project3/3.png',
+        title: 'Báo Cáo Doanh Thu & Hệ Thống Chia Hoa Hồng Nhà Xe',
+        fallbackSvg: (
+          <div className="w-full h-full bg-gradient-to-br from-cyan-900/30 to-emerald-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <Sparkles className="w-8 h-8 text-cyan-400 mb-2" />
+            <span className="text-[11px] font-bold text-cyan-200">Financial Revenue Analytics</span>
+            <span className="text-[9px] text-cyan-400 mt-1">Biểu đồ trực quan hóa doanh số bán vé và phân tách hoa hồng</span>
+          </div>
+        )
+      }
+    ]
+  };
+
+  // Component Live Box trình chiếu đa phương tiện cho từng dự án
+  const LiveBox: React.FC<{ projectId: string }> = ({ projectId }) => {
+    const images = PROJECT_GALLERIES[projectId];
+    if (!images) return null;
+
+    const [activeIndex, setActiveIndex] = useState<number>(0);
+    const [imageStates, setImageStates] = useState<Record<number, 'loading' | 'success' | 'error'>>({});
+
+    const handleImageLoad = (index: number) => {
+      setImageStates(prev => ({ ...prev, [index]: 'success' }));
+    };
+
+    const handleImageError = (index: number) => {
+      setImageStates(prev => ({ ...prev, [index]: 'error' }));
+    };
+
+    const nextSlide = () => {
+      setActiveIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const prevSlide = () => {
+      setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+
+    const currentImage = images[activeIndex];
+    const isError = imageStates[activeIndex] === 'error';
+
+    return (
+      <div className="mt-4 border border-slate-800/80 bg-slate-950/60 rounded-2xl overflow-hidden shadow-lg transition-all max-w-lg w-full">
+        {/* Tiêu đề Live Box */}
+        <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Live Box Trình Chiếu Giao Diện</span>
+          </div>
+          <span className="text-[10px] text-slate-500 font-medium">
+            {activeIndex + 1} / {images.length}
+          </span>
+        </div>
+
+        {/* Khung chứa ảnh / SVG Fallback */}
+        <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden group">
+          {/* Nút lướt ảnh trái */}
+          <button 
+            onClick={prevSlide}
+            className="absolute left-2.5 z-10 p-1.5 rounded-full bg-black/60 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {/* Render ảnh hoặc SVG dự phòng */}
+          {isError ? (
+            currentImage.fallbackSvg
+          ) : (
+            <>
+              <img 
+                src={currentImage.url} 
+                alt={currentImage.title}
+                onLoad={() => handleImageLoad(activeIndex)}
+                onError={() => handleImageError(activeIndex)}
+                className="w-full h-full object-cover transition-all"
+              />
+              <button 
+                onClick={() => {
+                  setLightboxImage(currentImage.url);
+                  setLightboxTitle(currentImage.title);
+                }}
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Phóng to ảnh"
+              >
+                <Maximize2 size={14} />
+              </button>
+            </>
+          )}
+
+          {/* Nút lướt ảnh phải */}
+          <button 
+            onClick={nextSlide}
+            className="absolute right-2.5 z-10 p-1.5 rounded-full bg-black/60 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+
+        {/* Tên ảnh mô tả */}
+        <div className="p-3 bg-slate-900/20 flex items-start gap-2.5 border-t border-slate-800/40">
+          <Info size={14} className="text-cyan-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-slate-300 font-medium leading-relaxed">
+            {currentImage.title}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-0 sm:p-4 font-sans antialiased overflow-hidden">
       {/* Hiệu ứng nền Blur nghệ thuật */}
@@ -156,14 +376,14 @@ export default function App() {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       {/* Khung Chatbox chính */}
-      <div className="relative w-full max-w-5xl h-screen sm:h-[750px] bg-slate-900/40 backdrop-blur-xl sm:rounded-2xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col md:flex-row">
+      <div className="relative w-full max-w-6xl h-screen sm:h-[780px] bg-slate-900/40 backdrop-blur-xl sm:rounded-2xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col md:flex-row">
         
-        {/* Sidebar bên trái chứa thông tin của Phạm Hồng Trưởng */}
-        <div className="w-full md:w-80 bg-slate-950/80 border-b md:border-b-0 md:border-r border-slate-800 p-6 flex flex-col justify-between hidden md:flex">
+        {/* Sidebar bên trái chứa thông tin Phạm Hồng Trưởng */}
+        <div className="w-full md:w-[350px] bg-slate-950/80 border-b md:border-b-0 md:border-r border-slate-800 p-6 flex flex-col justify-between hidden md:flex overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           <div className="space-y-6">
             
             {/* Profile Avatar Card */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px]">
                   <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center font-bold text-lg text-indigo-400">
@@ -172,32 +392,32 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-200">Phạm Hồng Trưởng</h3>
-                  <p className="text-xs text-slate-400">Fullstack Engineer</p>
+                  <p className="text-[11px] text-slate-400 font-medium tracking-wide">VTC Academy Student | Fullstack Engineer</p>
                 </div>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/40 p-3 rounded-xl border border-slate-800">
-                Chào bạn! Mình là một lập trình viên Fullstack đầy nhiệt huyết, có thế mạnh đặc biệt trong việc xây dựng hệ thống bền vững với <strong>NestJS</strong> ở Backend và giao diện tối ưu hiệu suất bằng <strong>ReactJS</strong> ở Frontend.
+                Mình là sinh viên Học viện Công nghệ VTC (VTC Academy), được đào tạo chuyên sâu về <strong>Fullstack Development</strong>. Mình đam mê xây dựng các sản phẩm Web/Mobile tối ưu, hiện đại, sử dụng đa dạng các công nghệ mạnh mẽ.
               </p>
             </div>
 
-            {/* Chi tiết thông tin giới thiệu cá nhân từ CV */}
-            <div className="space-y-3">
-              <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase block">Hồ sơ chuyên môn</span>
-              <ul className="space-y-2 text-xs text-slate-400">
-                <li className="flex items-start gap-2">
-                  <span className="text-indigo-400 mt-0.5">⚡</span>
-                  <span><strong>Kỹ năng chính:</strong> NestJS, React, TypeScript, MongoDB (Mongoose), RESTful API.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-indigo-400 mt-0.5">⚡</span>
-                  <span><strong>Mục tiêu:</strong> Thiết kế và tối ưu cấu trúc các hệ thống Web lớn, mang đến trải nghiệm UI/UX tinh tế.</span>
-                </li>
-              </ul>
+            {/* Chi tiết năng lực công nghệ */}
+            <div className="space-y-2.5">
+              <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase block">Hồ sơ kỹ năng</span>
+              <div className="flex flex-wrap gap-1.5">
+                {['NestJS', 'Laravel', 'React', 'React Native', 'Flutter', 'MySQL', 'MongoDB', 'Docker', 'Git'].map((skill, index) => (
+                  <span key={index} className="bg-slate-900 border border-slate-800 text-slate-300 text-[10px] px-2.5 py-1 rounded-md font-medium">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+              <p className="text-[11px] text-slate-400 italic">
+                Công cụ quản lý: Trello, Jira, Postman, Swagger. Kỹ năng mềm: Làm việc nhóm, Giải quyết vấn đề, Tư duy logic.
+              </p>
             </div>
 
             {/* Tài liệu CV Đính Kèm */}
             <div className="space-y-2">
-              <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Hồ sơ của tôi</span>
+              <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Tài liệu đính kèm</span>
               <a 
                 href={downloadCvUrl} 
                 target="_blank" 
@@ -217,32 +437,40 @@ export default function App() {
               </a>
             </div>
 
-            {/* Danh bạ liên hệ trực tiếp cập nhật thực tế */}
-            <div className="space-y-3.5 bg-slate-900/30 p-4 rounded-xl border border-slate-800">
+            {/* Thông tin liên hệ trực tiếp */}
+            <div className="space-y-3 bg-slate-900/30 p-4 rounded-xl border border-slate-800">
               <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase block">Thông tin kết nối</span>
-              <div className="space-y-2.5 text-xs">
+              <div className="space-y-2.5 text-xs text-slate-300">
+                <div className="flex items-center gap-2.5">
+                  <Phone size={14} className="text-slate-500" />
+                  <span>0931266543</span>
+                </div>
+                <a 
+                  href="mailto:truongtruongbvn@gmail.com" 
+                  className="flex items-center gap-2.5 hover:text-indigo-400 transition-colors group"
+                >
+                  <Mail size={14} className="text-slate-500 group-hover:text-indigo-400" />
+                  <span className="truncate">truongtruongbvn@gmail.com</span>
+                </a>
+                <div className="flex items-center gap-2.5">
+                  <MapPin size={14} className="text-slate-500" />
+                  <span>Ho Chi Minh City, Vietnam</span>
+                </div>
                 <a 
                   href="https://github.com/Hongtruongbvn" 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="flex items-center gap-2.5 text-slate-300 hover:text-indigo-400 transition-colors group"
+                  className="flex items-center gap-2.5 hover:text-indigo-400 transition-colors group"
                 >
-                  <GithubIcon size={16} className="text-slate-400 group-hover:text-indigo-400" />
-                  <span className="truncate">GitHub: Hongtruongbvn</span>
-                </a>
-                <a 
-                  href="mailto:truongtruongbvn@gmail.com" 
-                  className="flex items-center gap-2.5 text-slate-300 hover:text-indigo-400 transition-colors group"
-                >
-                  <Mail size={16} className="text-slate-400 group-hover:text-indigo-400" />
-                  <span className="truncate">truongtruongbvn@gmail.com</span>
+                  <GithubIcon size={14} className="text-slate-500 group-hover:text-indigo-400" />
+                  <span className="truncate">github.com/Hongtruongbvn</span>
                 </a>
               </div>
             </div>
 
           </div>
 
-          <div className="text-[10px] text-slate-500 flex items-center gap-1.5">
+          <div className="text-[10px] text-slate-500 flex items-center gap-1.5 pt-4 border-t border-slate-900">
             <Info size={12} />
             <span>Xây dựng bằng NestJS, Mongoose, Gemini</span>
           </div>
@@ -292,9 +520,15 @@ export default function App() {
           </div>
 
           {/* Danh sách các bong bóng chat */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
             {messages.map((msg) => {
               const hasDownloadLink = msg.content.includes(downloadCvUrl);
+              const lowerContent = msg.content.toLowerCase();
+
+              // Tự động kiểm tra xem AI đang nhắc đến dự án cụ thể nào để đính kèm Live Box tương ứng
+              const isProject1 = lowerContent.includes('mầm non') || lowerContent.includes('mam non') || lowerContent.includes('kindergarten');
+              const isProject2 = lowerContent.includes('social') || lowerContent.includes('socal') || lowerContent.includes('mạng xã hội');
+              const isProject3 = lowerContent.includes('bus') || lowerContent.includes('vé xe') || lowerContent.includes('ve xe') || lowerContent.includes('ticket');
 
               return (
                 <div 
@@ -321,7 +555,16 @@ export default function App() {
                     }`}>
                       {msg.content}
 
-                      {/* NÚT CHUYÊN NGHIỆP TẢI FILE: Tự hiển thị khi phát hiện link tải CV trong đoạn chat */}
+                      {/* ĐÍNH KÈM LIVE BOX TRÌNH CHIẾU CHO TỪNG DỰ ÁN */}
+                      {msg.role === 'assistant' && !msg.isError && (
+                        <>
+                          {isProject1 && <LiveBox projectId="project1" />}
+                          {isProject2 && <LiveBox projectId="project2" />}
+                          {isProject3 && <LiveBox projectId="project3" />}
+                        </>
+                      )}
+
+                      {/* NÚT TẢI FILE: Tự hiển thị khi phát hiện link tải CV trong đoạn chat */}
                       {msg.role === 'assistant' && hasDownloadLink && !msg.isError && (
                         <div className="mt-3.5 pt-3.5 border-t border-slate-800/80">
                           <a 
@@ -405,7 +648,7 @@ export default function App() {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Hỏi về dự án của Trưởng hoặc gõ 'tải CV'..."
+                placeholder="Hỏi về dự án mầm non, social media, bus ticket hoặc gõ 'tải CV'..."
                 className="flex-1 bg-transparent border-transparent px-3 py-2 text-sm text-slate-200 outline-none placeholder:text-slate-500"
                 disabled={isLoading}
               />
@@ -424,6 +667,31 @@ export default function App() {
 
         </div>
       </div>
+
+      {/* LIGHTBOX PHÓNG TO ẢNH (MODAL) */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button 
+            className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/85 border border-slate-800 text-slate-300 hover:text-white"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X size={20} />
+          </button>
+          
+          <img 
+            src={lightboxImage} 
+            alt={lightboxTitle} 
+            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+          />
+          
+          <p className="mt-4 text-sm font-semibold text-slate-300 tracking-wide text-center max-w-2xl bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
+            {lightboxTitle}
+          </p>
+        </div>
+      )}
 
       {/* Modal xác nhận xóa lịch sử */}
       {showClearConfirm && (
