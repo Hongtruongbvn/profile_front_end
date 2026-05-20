@@ -42,7 +42,6 @@ interface Message {
 
 const SUGGESTED_QUESTIONS: string[] = [
   "Tải CV của anh Trưởng về máy",
-  "Kinh nghiệm làm việc của bạn thế nào?",
   "Các dự án nổi bật của bạn là gì?",
   "Bạn có kinh nghiệm với NestJS và React không?"
 ];
