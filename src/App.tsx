@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   Maximize2,
   Eye,
-  Layers
+  Layers,
+  Code
 } from 'lucide-react';
 
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = "" }) => (
@@ -55,10 +56,10 @@ interface ProjectImage {
 }
 
 const SUGGESTED_QUESTIONS: string[] = [
-  "Tải CV của anh Trưởng về máy",
-  "Kinh nghiệm làm việc của bạn thế nào?",
-  "Các dự án nổi bật của bạn là gì?",
-  "Bạn có kinh nghiệm với NestJS và React không?"
+  "Bạn là ai?",
+  "Cho mình xem chi tiết dự án Mầm non",
+  "Trình chiếu ảnh dự án Social Network",
+  "Dự án Bus Ticket có giao diện như thế nào?"
 ];
 
 export default function App() {
@@ -66,7 +67,7 @@ export default function App() {
     { 
       id: 1, 
       role: 'assistant', 
-      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về 3 dự án lớn: Mầm non, Social Network, Bus Ticket để tôi trình chiếu ảnh giao diện (Live Box) thực tế cho bạn xem nhé!',
+      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về 3 dự án lớn: Mầm non, Social Network, Bus Ticket hoặc gõ "bạn là ai" để tôi trình chiếu ảnh giao diện và chân dung thực tế cho bạn xem nhé!',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -81,10 +82,10 @@ export default function App() {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Đường link tĩnh để tải file CV PDF từ Backend NestJS
-  const downloadCvUrl = 'http://localhost:3000/public/CV_PhamHongTruong.pdf';
-  // Địa chỉ backend cứng, loại bỏ cấu hình thủ công trên UI để bảo mật và sạch sẽ
-  const backendUrl = 'http://localhost:3000/chat';
+  // Cấu hình URL cơ sở kết nối Backend trên Render mới
+  const BACKEND_BASE = 'https://profile-back-end.onrender.com';
+  const downloadCvUrl = `${BACKEND_BASE}/public/CV_PhamHongTruong.pdf`;
+  const backendUrl = `${BACKEND_BASE}/chat`;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -145,7 +146,7 @@ export default function App() {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: 'assistant',
-        content: `❌ Không thể kết nối với máy chủ Backend tại: ${backendUrl}.\n\nHãy đảm bảo bạn đã khởi chạy NestJS backend của mình cục bộ và kích hoạt CORS trong file "main.ts" với dòng lệnh "app.enableCors()".`,
+        content: `❌ Không thể kết nối với máy chủ Backend tại: ${backendUrl}.\n\nHãy đảm bảo bạn đã khởi chạy NestJS backend của mình và kích hoạt CORS trong file "main.ts" với dòng lệnh "app.enableCors()".`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isError: true
       }]);
@@ -166,23 +167,23 @@ export default function App() {
     setShowClearConfirm(false);
   };
 
-  // 1. ĐỊNH NGHĨA DANH SÁCH ẢNH VÀ FALLBACK CHO TỪNG DỰ ÁN
+  // 1. ĐỊNH NGHĨA DANH SÁCH ẢNH VÀ FALLBACK CHO TỪNG DỰ ÁN (Sử dụng BACKEND_BASE mới)
   const PROJECT_GALLERIES: Record<string, ProjectImage[]> = {
     project1: [
       {
-        url: 'https://profile-back-end.onrender.com/public/project1/1.png',
-        title: 'Bảng Điều Khiển Quản Trị (Admin Dashboard)',
+        url: `${BACKEND_BASE}/public/project1/1.png`,
+        title: 'Bảng Điều Khiển Quản Trị (Admin Dashboard) - Mầm Non',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-pink-900/30 to-rose-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <Layers className="w-8 h-8 text-rose-400 mb-2" />
+            <Layers className="w-8 h-8 text-rose-400 mb-2 animate-bounce" />
             <span className="text-[11px] font-bold text-rose-200">Kindergarten Admin Dashboard</span>
             <span className="text-[9px] text-rose-400 mt-1">Quản lý lớp học, lịch trực và thống kê học phí</span>
           </div>
         )
       },
       {
-        url: 'https://profile-back-end.onrender.com/public/project1/2.png',
-        title: 'Màn hình Quản Lý Giáo Viên & Học Sinh',
+        url: `${BACKEND_BASE}/public/project1/2.png`,
+        title: 'Màn hình Quản Lý Giáo Viên & Học Sinh - Mầm Non',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-orange-900/30 to-amber-900/30 flex flex-col items-center justify-center p-4 text-center">
             <User className="w-8 h-8 text-amber-400 mb-2" />
@@ -192,8 +193,8 @@ export default function App() {
         )
       },
       {
-        url: 'https://profile-back-end.onrender.com/public/project1/3.png',
-        title: 'Cổng Giám Sát Camera Trực Tuyến',
+        url: `${BACKEND_BASE}/public/project1/3.png`,
+        title: 'Cổng Giám Sát Camera Trực Tuyến - Mầm Non',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-red-900/30 to-pink-900/30 flex flex-col items-center justify-center p-4 text-center">
             <Eye className="w-8 h-8 text-pink-400 mb-2" />
@@ -205,8 +206,8 @@ export default function App() {
     ],
     project2: [
       {
-        url: 'https://profile-back-end.onrender.com/public/project2/1.png',
-        title: 'Bảng Tin Chia Sẻ Hoạt Động (Social Newsfeed)',
+        url: `${BACKEND_BASE}/public/project2/1.png`,
+        title: 'Bảng Tin Chia Sẻ Hoạt Động (Social Newsfeed) - Social Network',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-indigo-900/30 to-blue-900/30 flex flex-col items-center justify-center p-4 text-center">
             <Sparkles className="w-8 h-8 text-indigo-400 mb-2" />
@@ -216,8 +217,8 @@ export default function App() {
         )
       },
       {
-        url: 'https://profile-back-end.onrender.com/public/project2/2.png',
-        title: 'Hệ Thống Phòng Chat Nhóm (Discord-style Guilds)',
+        url: `${BACKEND_BASE}/public/project2/2.png`,
+        title: 'Hệ Thống Phòng Chat Nhóm (Discord-style Guilds) - Social Network',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-purple-900/30 to-indigo-900/30 flex flex-col items-center justify-center p-4 text-center">
             <Bot className="w-8 h-8 text-purple-400 mb-2" />
@@ -227,8 +228,8 @@ export default function App() {
         )
       },
       {
-        url: 'https://profile-back-end.onrender.com/public/project2/3.png',
-        title: 'Giao Diện Thiết Bị Di Động (React Native Client)',
+        url: `${BACKEND_BASE}/public/project2/3.png`,
+        title: 'Giao Diện Thiết Bị Di Động (React Native Client) - Social Network',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-cyan-900/30 to-blue-900/30 flex flex-col items-center justify-center p-4 text-center">
             <Phone className="w-8 h-8 text-cyan-400 mb-2" />
@@ -240,8 +241,8 @@ export default function App() {
     ],
     project3: [
       {
-        url: 'https://profile-back-end.onrender.com/public/project3/1.png',
-        title: 'Hệ Thống Đặt Vé & Sơ Đồ Chọn Ghế Ngồi',
+        url: `${BACKEND_BASE}/public/project3/1.png`,
+        title: 'Hệ Thống Đặt Vé & Sơ Đồ Chọn Ghế Ngồi - Bus Ticket',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-teal-900/30 to-emerald-900/30 flex flex-col items-center justify-center p-4 text-center">
             <Layers className="w-8 h-8 text-teal-400 mb-2" />
@@ -251,8 +252,8 @@ export default function App() {
         )
       },
       {
-        url: 'https://profile-back-end.onrender.com/public/project3/2.png',
-        title: 'Trình Quản Lý Phương Tiện, Tuyến Đường & Tài Xế',
+        url: `${BACKEND_BASE}/public/project3/2.png`,
+        title: 'Trình Quản Lý Phương Tiện, Tuyến Đường & Tài Xế - Bus Ticket',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-emerald-900/30 to-green-900/30 flex flex-col items-center justify-center p-4 text-center">
             <MapPin className="w-8 h-8 text-emerald-400 mb-2" />
@@ -262,8 +263,8 @@ export default function App() {
         )
       },
       {
-        url: 'https://profile-back-end.onrender.com/public/project3/3.png',
-        title: 'Báo Cáo Doanh Thu & Hệ Thống Chia Hoa Hồng Nhà Xe',
+        url: `${BACKEND_BASE}/public/project3/3.png`,
+        title: 'Báo Cáo Doanh Thu & Hệ Thống Chia Hoa Hồng - Bus Ticket',
         fallbackSvg: (
           <div className="w-full h-full bg-gradient-to-br from-cyan-900/30 to-emerald-900/30 flex flex-col items-center justify-center p-4 text-center">
             <Sparkles className="w-8 h-8 text-cyan-400 mb-2" />
@@ -300,7 +301,7 @@ export default function App() {
     };
 
     const currentImage = images[activeIndex];
-    const isError = imageStates[activeIndex] === 'error';
+    const isError = imageStates[activeIndex] === 'error' || !imageStates[activeIndex];
 
     return (
       <div className="mt-4 border border-slate-800/80 bg-slate-950/60 rounded-2xl overflow-hidden shadow-lg transition-all max-w-lg w-full">
@@ -365,6 +366,52 @@ export default function App() {
           <p className="text-xs text-slate-300 font-medium leading-relaxed">
             {currentImage.title}
           </p>
+        </div>
+      </div>
+    );
+  };
+
+  // 2. COMPONENT LIVE BOX ĐỂ LOAD ẢNH CHÂN DUNG TỪ public/user/
+  const UserPhotoBox: React.FC = () => {
+    const imageUrl = `${BACKEND_BASE}/public/user/avatar.png`; // hoặc avatar.jpg
+    const [imageState, setImageState] = useState<'loading' | 'success' | 'error'>('loading');
+
+    return (
+      <div className="mt-4 border border-slate-800/80 bg-slate-950/60 rounded-2xl overflow-hidden shadow-lg transition-all max-w-xs w-full">
+        {/* Tiêu đề Box */}
+        <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 py-2 flex items-center justify-between">
+          <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Hình ảnh cá nhân</span>
+        </div>
+
+        {/* Khung chứa ảnh / Fallback SVG */}
+        <div className="relative aspect-square w-full bg-slate-950 flex items-center justify-center overflow-hidden group">
+          {imageState === 'error' ? (
+            <div className="w-full h-full bg-gradient-to-br from-indigo-900/30 to-purple-900/30 flex flex-col items-center justify-center p-4 text-center">
+              <User className="w-16 h-16 text-indigo-400 mb-3 animate-pulse" />
+              <span className="text-xs font-bold text-indigo-200">Phạm Hồng Trưởng</span>
+              <span className="text-[10px] text-indigo-400 mt-1">Fullstack Engineer</span>
+            </div>
+          ) : (
+            <>
+              <img 
+                src={imageUrl} 
+                alt="Phạm Hồng Trưởng"
+                onLoad={() => setImageState('success')}
+                onError={() => setImageState('error')}
+                className="w-full h-full object-cover transition-all duration-300"
+              />
+              <button 
+                onClick={() => {
+                  setLightboxImage(imageUrl);
+                  setLightboxTitle("Ảnh chân dung Phạm Hồng Trưởng");
+                }}
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Phóng to ảnh"
+              >
+                <Maximize2 size={14} />
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -530,6 +577,9 @@ export default function App() {
               const isProject1 = lowerContent.includes('mầm non') || lowerContent.includes('mam non') || lowerContent.includes('kindergarten');
               const isProject2 = lowerContent.includes('social') || lowerContent.includes('socal') || lowerContent.includes('mạng xã hội');
               const isProject3 = lowerContent.includes('bus') || lowerContent.includes('vé xe') || lowerContent.includes('ve xe') || lowerContent.includes('ticket');
+              
+              // Kiểm tra xem có đang giới thiệu bản thân bạn là ai không
+              const isSelfIntro = lowerContent.includes('bạn là ai') || lowerContent.includes('giới thiệu') || lowerContent.includes('who are you') || lowerContent.includes('introduce') || lowerContent.includes('phạm hồng trưởng') || lowerContent.includes('pham hong truong');
 
               return (
                 <div 
@@ -562,6 +612,7 @@ export default function App() {
                           {isProject1 && <LiveBox projectId="project1" />}
                           {isProject2 && <LiveBox projectId="project2" />}
                           {isProject3 && <LiveBox projectId="project3" />}
+                          {isSelfIntro && !isProject1 && !isProject2 && !isProject3 && <UserPhotoBox />}
                         </>
                       )}
 
