@@ -54,7 +54,6 @@ interface ProjectImage {
   fallbackSvg: React.ReactNode;
 }
 
-// Cấu trúc dự án để quản lý link và ảnh năng động
 interface ProjectDetail {
   id: string;
   name: string;
@@ -92,7 +91,7 @@ export default function App() {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Cấu hình URL cơ sở kết nối Backend trên Render mới
+  // Cấu hình URL cơ sở kết nối Backend trên Render mới của bạn
   const BACKEND_BASE = 'https://profile-back-end.onrender.com';
   const downloadCvUrl = `${BACKEND_BASE}/public/CV_PhamHongTruong.pdf`;
   const backendUrl = `${BACKEND_BASE}/chat`;
@@ -156,7 +155,7 @@ export default function App() {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: 'assistant',
-        content: `❌ Không thể kết nối với máy chủ Backend tại: ${backendUrl}.\n\nHãy đảm bảo bạn đã khởi chạy NestJS backend của mình và kích hoạt CORS trong file "main.ts" với dòng lệnh "app.enableCors()".`,
+        content: `❌ Không thể kết nối với máy chủ Backend tại: ${backendUrl}.\n\nHãy đảm bảo máy chủ NestJS đã được triển khai hoạt động ổn định và được kích hoạt CORS (app.enableCors()).`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isError: true
       }]);
@@ -177,7 +176,7 @@ export default function App() {
     setShowClearConfirm(false);
   };
 
-  // Cấu trúc dự án và danh sách ảnh linh động (Không giới hạn số lượng ảnh)
+  // Cấu trúc quản lý danh sách ảnh động không giới hạn số lượng ảnh
   const PROJECTS_DATA: Record<string, ProjectDetail> = {
     project1: {
       id: 'project1',
@@ -305,13 +304,13 @@ export default function App() {
     }
   };
 
-  // Component Live Box nâng cấp: Hiển thị mảng ảnh động, margin chuẩn chỉ, gắn link trực tiếp
+  // Component Live Box nâng cấp: Trình chiếu ảnh động, margin chuẩn, nút chuyển trang trực tiếp
   const LiveBox: React.FC<{ projectId: string }> = ({ projectId }) => {
     const project = PROJECTS_DATA[projectId];
     if (!project || !project.images || project.images.length === 0) return null;
 
     const [activeIndex, setActiveIndex] = useState<number>(0);
-    const [imageStates, setImageStates] = useState<Record<number, 'loading' | 'success' | 'error'>>({});
+    const [imageStates, setImageStates] = useState<Record<number, 'success' | 'error'>>({});
 
     const handleImageLoad = (index: number) => {
       setImageStates(prev => ({ ...prev, [index]: 'success' }));
@@ -330,11 +329,11 @@ export default function App() {
     };
 
     const currentImage = project.images[activeIndex];
-    const isError = imageStates[activeIndex] === 'error' || !imageStates[activeIndex];
+    const isError = imageStates[activeIndex] === 'error';
 
     return (
       <div className="my-4 border border-slate-800 bg-slate-950/80 rounded-2xl overflow-hidden shadow-xl transition-all max-w-lg w-full flex flex-col">
-        {/* Tiêu đề Live Box */}
+        {/* Header Live Box */}
         <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
@@ -345,9 +344,8 @@ export default function App() {
           </span>
         </div>
 
-        {/* Khung chứa ảnh / SVG Fallback */}
+        {/* Khung chứa ảnh / Fallback */}
         <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden group border-b border-slate-900">
-          {/* Nút lướt ảnh trái */}
           <button 
             onClick={prevSlide}
             className="absolute left-3 z-10 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
@@ -355,7 +353,6 @@ export default function App() {
             <ChevronLeft size={16} />
           </button>
 
-          {/* Render ảnh hoặc SVG dự phòng */}
           {isError ? (
             currentImage.fallbackSvg
           ) : (
@@ -380,7 +377,6 @@ export default function App() {
             </>
           )}
 
-          {/* Nút lướt ảnh phải */}
           <button 
             onClick={nextSlide}
             className="absolute right-3 z-10 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
@@ -389,7 +385,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Tên mô tả chi tiết ảnh */}
+        {/* Mô tả chi tiết */}
         <div className="p-3.5 bg-slate-950/40 flex items-start gap-2.5 border-b border-slate-900/50">
           <Info size={14} className="text-cyan-400 shrink-0 mt-0.5" />
           <p className="text-xs text-slate-300 font-medium leading-relaxed">
@@ -397,9 +393,8 @@ export default function App() {
           </p>
         </div>
 
-        {/* CÁC NÚT KẾT NỐI TRỰC TIẾP (ẤN LÀ QUA TRANG LUÔN) */}
+        {/* HÀNH ĐỘNG GẮN LINK TRỰC TIẾP (ẤN LÀ CHUYỂN TRANG NGAY) */}
         <div className="p-3 bg-slate-900/40 flex flex-wrap gap-2 justify-end">
-          {/* Nút Github */}
           {project.githubBackendUrl && project.githubFrontendUrl ? (
             <>
               <a 
@@ -433,7 +428,6 @@ export default function App() {
             </a>
           )}
 
-          {/* Nút Demo Deploy (Nếu có) */}
           {project.deployUrl && (
             <a 
               href={project.deployUrl}
@@ -450,24 +444,22 @@ export default function App() {
     );
   };
 
-  // Component Live Box hiển thị ảnh chân dung của Trưởng (Chỉ lấy khi người dùng hỏi giới thiệu bản thân)
+  // Component hiển thị chân dung của Trưởng khi gọi thông tin giới thiệu bản thân
   const UserPhotoBox: React.FC = () => {
     const imageUrl = `${BACKEND_BASE}/public/user/avatar.png`;
-    const [imageState, setImageState] = useState<'loading' | 'success' | 'error'>('loading');
+    const [imageState, setImageState] = useState<'success' | 'error'>('success');
 
     return (
       <div className="my-4 border border-slate-800 bg-slate-950/80 rounded-2xl overflow-hidden shadow-xl transition-all max-w-xs w-full flex flex-col">
-        {/* Tiêu đề Box */}
         <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
           <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Ảnh Chân Dung</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
         </div>
 
-        {/* Khung chứa ảnh / Fallback SVG */}
         <div className="relative aspect-square w-full bg-slate-950 flex items-center justify-center overflow-hidden group">
           {imageState === 'error' ? (
             <div className="w-full h-full bg-gradient-to-br from-indigo-900/30 to-purple-900/30 flex flex-col items-center justify-center p-6 text-center">
-              <User className="w-16 h-16 text-indigo-400 mb-3 animate-pulse" />
+              <User className="w-16 h-16 text-indigo-400 mb-3" />
               <span className="text-xs font-bold text-indigo-200">Phạm Hồng Trưởng</span>
               <span className="text-[10px] text-indigo-400/80 mt-1 leading-relaxed">Fullstack Engineer</span>
             </div>
@@ -476,7 +468,6 @@ export default function App() {
               <img 
                 src={imageUrl} 
                 alt="Phạm Hồng Trưởng"
-                onLoad={() => setImageState('success')}
                 onError={() => setImageState('error')}
                 className="w-full h-full object-cover transition-all duration-300"
               />
@@ -499,18 +490,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-0 sm:p-4 font-sans antialiased overflow-hidden">
-      {/* Hiệu ứng nền Blur nghệ thuật */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       {/* Khung Chatbox chính */}
       <div className="relative w-full max-w-6xl h-screen sm:h-[780px] bg-slate-900/40 backdrop-blur-xl sm:rounded-2xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col md:flex-row">
         
-        {/* Sidebar bên trái chứa thông tin Phạm Hồng Trưởng */}
+        {/* Sidebar bên trái */}
         <div className="w-full md:w-[350px] bg-slate-950/80 border-b md:border-b-0 md:border-r border-slate-800 p-6 flex flex-col justify-between hidden md:flex overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           <div className="space-y-6">
-            
-            {/* Profile Avatar Card */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px]">
@@ -524,11 +512,10 @@ export default function App() {
                 </div>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/40 p-3 rounded-xl border border-slate-800">
-                Mình là sinh viên Học viện Công nghệ VTC (VTC Academy), được đào tạo chuyên sâu về <strong>Fullstack Development</strong>. Mình đam mê xây dựng các sản phẩm Web/Mobile tối ưu, hiện đại, sử dụng đa dạng các công nghệ mạnh mẽ.
+                Mình là sinh viên Học viện Công nghệ VTC (VTC Academy), được đào tạo chuyên sâu về <strong>Fullstack Development</strong>. Mình đam mê xây dựng các sản phẩm Web/Mobile tối ưu hiện đại.
               </p>
             </div>
 
-            {/* Chi tiết năng lực công nghệ */}
             <div className="space-y-2.5">
               <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase block">Hồ sơ kỹ năng</span>
               <div className="flex flex-wrap gap-1.5">
@@ -538,12 +525,8 @@ export default function App() {
                   </span>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-400 italic leading-relaxed">
-                Công cụ quản lý: Trello, Jira, Postman, Swagger. Kỹ năng mềm: Làm việc nhóm, Giải quyết vấn đề, Tư duy logic.
-              </p>
             </div>
 
-            {/* Tài liệu CV Đính Kèm */}
             <div className="space-y-2">
               <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Tài liệu đính kèm</span>
               <a 
@@ -565,7 +548,6 @@ export default function App() {
               </a>
             </div>
 
-            {/* Thông tin liên hệ trực tiếp */}
             <div className="space-y-3 bg-slate-900/30 p-4 rounded-xl border border-slate-800">
               <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase block">Thông tin kết nối</span>
               <div className="space-y-2.5 text-xs text-slate-300">
@@ -595,7 +577,6 @@ export default function App() {
                 </a>
               </div>
             </div>
-
           </div>
 
           <div className="text-[10px] text-slate-500 flex items-center gap-1.5 pt-4 border-t border-slate-900">
@@ -604,10 +585,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* Khung Chat chính bên phải */}
+        {/* Khung Chat chính */}
         <div className="flex-1 flex flex-col h-full bg-slate-950/20 relative">
           
-          {/* Header của Khung Chat */}
+          {/* Header */}
           <div className="bg-slate-950/80 backdrop-blur border-b border-slate-800 px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -647,23 +628,43 @@ export default function App() {
             </div>
           </div>
 
-          {/* Danh sách các bong bóng chat */}
+          {/* Danh sách tin nhắn */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
             {messages.map((msg) => {
               const hasDownloadLink = msg.content.includes(downloadCvUrl);
               const lowerContent = msg.content.toLowerCase();
 
-              // Chỉ kích hoạt Live Box khi Trợ lý AI đang trả lời (Assistant) 
-              // và tin nhắn của AI chứa từ khóa nhắc đến dự án cụ thể.
-              // KHÔNG HIỂN THỊ LIVE BOX Ở TIN NHẮN MỞ ĐẦU (id === 1) theo yêu cầu!
+              // CHỈ KÍCH HOẠT BOX KHI AI ĐANG TRẢ LỜI VÀ KHÔNG PHẢI LÀ LỜI CHÀO MỞ ĐẦU (id !== 1)
               const showMediaBox = msg.role === 'assistant' && msg.id !== 1 && !msg.isError;
 
-              const isProject1 = showMediaBox && (lowerContent.includes('mầm non') || lowerContent.includes('mam non') || lowerContent.includes('kindergarten'));
-              const isProject2 = showMediaBox && (lowerContent.includes('social') || lowerContent.includes('socal') || lowerContent.includes('mạng xã hội'));
-              const isProject3 = showMediaBox && (lowerContent.includes('bus') || lowerContent.includes('vé xe') || lowerContent.includes('ve xe') || lowerContent.includes('ticket'));
+              // 🎯 GIẢI PHÁP QUÉT THÔNG MINH: Quét từ khóa tiếng Việt kết hợp tên tệp/thư mục hệ thống từ Backend
+              const isProject1 = showMediaBox && (
+                lowerContent.includes('project1') || 
+                lowerContent.includes('mầm non') || 
+                lowerContent.includes('mam non') ||
+                lowerContent.includes('kindergarten')
+              );
+
+              const isProject2 = showMediaBox && (
+                lowerContent.includes('project2') || 
+                lowerContent.includes('social') || 
+                lowerContent.includes('socal') || 
+                lowerContent.includes('mạng xã hội')
+              );
+
+              const isProject3 = showMediaBox && (
+                lowerContent.includes('project3') || 
+                lowerContent.includes('bus') || 
+                lowerContent.includes('vé xe') || 
+                lowerContent.includes('ticket')
+              );
               
-              // Kiểm tra xem có đang giới thiệu bản thân bạn là ai không
-              const isSelfIntro = showMediaBox && (lowerContent.includes('bạn là ai') || lowerContent.includes('giới thiệu') || lowerContent.includes('who are you') || lowerContent.includes('introduce') || lowerContent.includes('phạm hồng trưởng') || lowerContent.includes('pham hong truong'));
+              const isSelfIntro = showMediaBox && (
+                lowerContent.includes('user/avatar') ||
+                lowerContent.includes('bạn là ai') || 
+                lowerContent.includes('giới thiệu') || 
+                lowerContent.includes('phạm hồng trưởng')
+              );
 
               return (
                 <div 
@@ -690,13 +691,13 @@ export default function App() {
                     }`}>
                       {msg.content}
 
-                      {/* ĐÍNH KÈM LIVE BOX TRÌNH CHIẾU CHO TỪNG DỰ ÁN KHI ĐƯỢC NHẮC ĐẾN */}
+                      {/* Hiển thị LiveBox tương ứng nếu thỏa mãn điều kiện quét */}
                       {isProject1 && <LiveBox projectId="project1" />}
                       {isProject2 && <LiveBox projectId="project2" />}
                       {isProject3 && <LiveBox projectId="project3" />}
                       {isSelfIntro && !isProject1 && !isProject2 && !isProject3 && <UserPhotoBox />}
 
-                      {/* NÚT TẢI FILE: Tự hiển thị khi phát hiện link tải CV trong đoạn chat */}
+                      {/* Nút tải tệp CV đính kèm */}
                       {msg.role === 'assistant' && hasDownloadLink && !msg.isError && (
                         <div className="mt-3.5 pt-3.5 border-t border-slate-800/80">
                           <a 
@@ -720,7 +721,6 @@ export default function App() {
               );
             })}
 
-            {/* Trạng thái AI đang suy nghĩ */}
             {isLoading && (
               <div className="flex gap-3 max-w-[80%] mr-auto">
                 <div className="w-8 h-8 rounded-full bg-indigo-900/30 border border-indigo-700/50 text-indigo-400 flex items-center justify-center">
@@ -736,15 +736,14 @@ export default function App() {
               </div>
             )}
             
-            {/* Hộp thoại trợ giúp xử lý lỗi CORS */}
             {corsErrorOccurred && (
               <div className="bg-amber-950/40 border border-amber-900/40 p-4 rounded-xl flex items-start gap-3 max-w-[90%] mx-auto mt-2">
                 <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={18} />
                 <div className="text-xs text-amber-200 leading-relaxed">
-                  <strong className="block text-amber-300 font-semibold mb-1">Mẹo xử lý lỗi kết nối (CORS):</strong>
-                  Tại dự án Backend NestJS của bạn, hãy kiểm tra xem bạn đã bật cấu hình CORS trong file <code className="bg-slate-900 px-1 py-0.5 rounded text-indigo-400">main.ts</code> chưa:
+                  <strong className="block text-amber-300 font-semibold mb-1">Mẹo xử lý kết nối (CORS):</strong>
+                  Đảm bảo tệp <code className="bg-slate-900 px-1 py-0.5 rounded text-indigo-400">main.ts</code> ở Backend NestJS đã bật CORS:
                   <pre className="bg-slate-950 p-2 rounded border border-slate-800 text-[10px] mt-2 text-slate-300 font-mono">
-                    {`const app = await NestFactory.create(AppModule);\napp.enableCors(); // <--- ĐẢM BẢO DÒNG NÀY ĐÃ ĐƯỢC THÊM\nawait app.listen(3000);`}
+                    {`const app = await NestFactory.create(AppModule);\napp.enableCors();\nawait app.listen(3000);`}
                   </pre>
                 </div>
               </div>
@@ -753,7 +752,7 @@ export default function App() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Gợi ý các câu hỏi nhanh */}
+          {/* Gợi ý câu hỏi nhanh */}
           <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-900">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               {SUGGESTED_QUESTIONS.map((q, idx) => (
@@ -770,7 +769,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Biểu mẫu nhập câu hỏi */}
+          {/* Form gửi câu hỏi */}
           <div className="p-4 bg-slate-950 border-t border-slate-900">
             <form 
               onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} 
@@ -780,7 +779,7 @@ export default function App() {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Hỏi về dự án mầm non, social media, bus ticket hoặc gõ 'tải CV'..."
+                placeholder="Hỏi về dự án mầm non, mạng xã hội, bus ticket hoặc gõ 'tải CV'..."
                 className="flex-1 bg-transparent border-transparent px-3 py-2 text-sm text-slate-200 outline-none placeholder:text-slate-500"
                 disabled={isLoading}
               />
@@ -796,14 +795,13 @@ export default function App() {
               Hệ thống kết nối trực tiếp cơ sở dữ liệu MongoDB và phân tích CV thực tế của Phạm Hồng Trưởng thông qua NestJS & Gemini.
             </p>
           </div>
-
         </div>
       </div>
 
-      {/* LIGHTBOX PHÓNG TO ẢNH (MODAL) */}
+      {/* MODAL PHÓNG TO ẢNH (LIGHTBOX) */}
       {lightboxImage && (
         <div 
-          className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4"
           onClick={() => setLightboxImage(null)}
         >
           <button 
@@ -816,7 +814,7 @@ export default function App() {
           <img 
             src={lightboxImage} 
             alt={lightboxTitle} 
-            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl transition-transform duration-300"
+            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
           />
           
           <p className="mt-4 text-sm font-semibold text-slate-300 tracking-wide text-center max-w-2xl bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
