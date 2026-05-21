@@ -14,10 +14,12 @@ import {
   Download,
   Phone,
   MapPin,
+  ExternalLink,
   ChevronLeft,
   Maximize2,
   Eye,
   Layers,
+  Code
 } from 'lucide-react';
 
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = "" }) => (
@@ -46,11 +48,21 @@ interface Message {
   isError?: boolean;
 }
 
-// Cấu trúc thông tin ảnh cho Live Box của từng dự án
 interface ProjectImage {
   url: string;
   title: string;
   fallbackSvg: React.ReactNode;
+}
+
+// Cấu trúc dự án để quản lý link và ảnh năng động
+interface ProjectDetail {
+  id: string;
+  name: string;
+  githubUrl: string;
+  deployUrl?: string;
+  githubBackendUrl?: string;
+  githubFrontendUrl?: string;
+  images: ProjectImage[];
 }
 
 const SUGGESTED_QUESTIONS: string[] = [
@@ -165,119 +177,138 @@ export default function App() {
     setShowClearConfirm(false);
   };
 
-  // 1. ĐỊNH NGHĨA DANH SÁCH ẢNH VÀ FALLBACK CHO TỪNG DỰ ÁN (Sử dụng BACKEND_BASE mới)
-  const PROJECT_GALLERIES: Record<string, ProjectImage[]> = {
-    project1: [
-      {
-        url: `${BACKEND_BASE}/public/project1/1.png`,
-        title: 'Bảng Điều Khiển Quản Trị (Admin Dashboard) - Mầm Non',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-pink-900/30 to-rose-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <Layers className="w-8 h-8 text-rose-400 mb-2 animate-bounce" />
-            <span className="text-[11px] font-bold text-rose-200">Kindergarten Admin Dashboard</span>
-            <span className="text-[9px] text-rose-400 mt-1">Quản lý lớp học, lịch trực và thống kê học phí</span>
-          </div>
-        )
-      },
-      {
-        url: `${BACKEND_BASE}/public/project1/2.png`,
-        title: 'Màn hình Quản Lý Giáo Viên & Học Sinh - Mầm Non',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-orange-900/30 to-amber-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <User className="w-8 h-8 text-amber-400 mb-2" />
-            <span className="text-[11px] font-bold text-amber-200">Teacher & Student Directory</span>
-            <span className="text-[9px] text-amber-400 mt-1">Hồ sơ sức khỏe, chuyên môn và theo dõi chuyên cần</span>
-          </div>
-        )
-      },
-      {
-        url: `${BACKEND_BASE}/public/project1/3.png`,
-        title: 'Cổng Giám Sát Camera Trực Tuyến - Mầm Non',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-red-900/30 to-pink-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <Eye className="w-8 h-8 text-pink-400 mb-2" />
-            <span className="text-[11px] font-bold text-pink-200">Live CCTV Monitor & Payment Gateway</span>
-            <span className="text-[9px] text-pink-400 mt-1">Giám sát camera trực tiếp và tích hợp thanh toán học phí online</span>
-          </div>
-        )
-      }
-    ],
-    project2: [
-      {
-        url: `${BACKEND_BASE}/public/project2/1.png`,
-        title: 'Bảng Tin Chia Sẻ Hoạt Động (Social Newsfeed) - Social Network',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-indigo-900/30 to-blue-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <Sparkles className="w-8 h-8 text-indigo-400 mb-2" />
-            <span className="text-[11px] font-bold text-indigo-200">Interactive Social Newsfeed</span>
-            <span className="text-[9px] text-indigo-400 mt-1">Chia sẻ trạng thái, tương tác cảm xúc, bình luận thời gian thực</span>
-          </div>
-        )
-      },
-      {
-        url: `${BACKEND_BASE}/public/project2/2.png`,
-        title: 'Hệ Thống Phòng Chat Nhóm (Discord-style Guilds) - Social Network',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-purple-900/30 to-indigo-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <Bot className="w-8 h-8 text-purple-400 mb-2" />
-            <span className="text-[11px] font-bold text-purple-200">Guild Voice & Text Channels</span>
-            <span className="text-[9px] text-purple-400 mt-1">Phân quyền vai trò, chat nhóm thời gian thực qua socket</span>
-          </div>
-        )
-      },
-      {
-        url: `${BACKEND_BASE}/public/project2/3.png`,
-        title: 'Giao Diện Thiết Bị Di Động (React Native Client) - Social Network',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-cyan-900/30 to-blue-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <Phone className="w-8 h-8 text-cyan-400 mb-2" />
-            <span className="text-[11px] font-bold text-cyan-200">Responsive Mobile App UI</span>
-            <span className="text-[9px] text-cyan-400 mt-1">Trải nghiệm ứng dụng di động mượt mà với thông báo đẩy</span>
-          </div>
-        )
-      }
-    ],
-    project3: [
-      {
-        url: `${BACKEND_BASE}/public/project3/1.png`,
-        title: 'Hệ Thống Đặt Vé & Sơ Đồ Chọn Ghế Ngồi - Bus Ticket',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-teal-900/30 to-emerald-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <Layers className="w-8 h-8 text-teal-400 mb-2" />
-            <span className="text-[11px] font-bold text-teal-200">Seat Map Selection & Booking</span>
-            <span className="text-[9px] text-teal-400 mt-1">Chọn vị trí ngồi trực quan trên xe, tính giá vé khứ hồi tự động</span>
-          </div>
-        )
-      },
-      {
-        url: `${BACKEND_BASE}/public/project3/2.png`,
-        title: 'Trình Quản Lý Phương Tiện, Tuyến Đường & Tài Xế - Bus Ticket',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-emerald-900/30 to-green-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <MapPin className="w-8 h-8 text-emerald-400 mb-2" />
-            <span className="text-[11px] font-bold text-emerald-200">Route & Fleet Operations</span>
-            <span className="text-[9px] text-emerald-400 mt-1">Phân bổ lộ trình, giám sát thiết bị định vị xe chạy và lịch trình</span>
-          </div>
-        )
-      },
-      {
-        url: `${BACKEND_BASE}/public/project3/3.png`,
-        title: 'Báo Cáo Doanh Thu & Hệ Thống Chia Hoa Hồng - Bus Ticket',
-        fallbackSvg: (
-          <div className="w-full h-full bg-gradient-to-br from-cyan-900/30 to-emerald-900/30 flex flex-col items-center justify-center p-4 text-center">
-            <Sparkles className="w-8 h-8 text-cyan-400 mb-2" />
-            <span className="text-[11px] font-bold text-cyan-200">Financial Revenue Analytics</span>
-            <span className="text-[9px] text-cyan-400 mt-1">Biểu đồ trực quan hóa doanh số bán vé và phân tách hoa hồng</span>
-          </div>
-        )
-      }
-    ]
+  // Cấu trúc dự án và danh sách ảnh linh động (Không giới hạn số lượng ảnh)
+  const PROJECTS_DATA: Record<string, ProjectDetail> = {
+    project1: {
+      id: 'project1',
+      name: 'Kindergarten Management (Quản lý trường mầm non)',
+      githubUrl: 'https://github.com/Hongtruongbvn/quan_ly_truong_mam_non',
+      deployUrl: 'https://quan-ly-truong-mam-non.onrender.com/',
+      images: [
+        {
+          url: `${BACKEND_BASE}/public/project1/1.png`,
+          title: 'Bảng Điều Khiển Quản Trị (Admin Dashboard)',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-pink-900/40 to-rose-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Layers className="w-10 h-10 text-rose-400 mb-3 animate-pulse" />
+              <span className="text-xs font-bold text-rose-200">Kindergarten Admin Dashboard</span>
+              <span className="text-[10px] text-rose-400/80 mt-1.5 leading-relaxed">Hệ thống quản lý thời khóa biểu, tài chính, giáo viên và học sinh trực quan</span>
+            </div>
+          )
+        },
+        {
+          url: `${BACKEND_BASE}/public/project1/2.png`,
+          title: 'Hồ Sơ Chi Tiết Học Sinh & Giáo Viên',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-orange-900/40 to-amber-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <User className="w-10 h-10 text-amber-400 mb-3" />
+              <span className="text-xs font-bold text-amber-200">Student & Teacher Profiles</span>
+              <span className="text-[10px] text-amber-400/80 mt-1.5 leading-relaxed">Giám sát điểm danh, sức khỏe học sinh và phân chia lớp học</span>
+            </div>
+          )
+        },
+        {
+          url: `${BACKEND_BASE}/public/project1/3.png`,
+          title: 'Cổng Live Camera & Thanh Toán Học Phí Trực Tuyến',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-red-900/40 to-pink-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Eye className="w-10 h-10 text-pink-400 mb-3" />
+              <span className="text-xs font-bold text-pink-200">Live Camera Monitor</span>
+              <span className="text-[10px] text-pink-400/80 mt-1.5 leading-relaxed">Tích hợp camera giám sát trực tiếp dành cho phụ huynh và cổng học phí</span>
+            </div>
+          )
+        }
+      ]
+    },
+    project2: {
+      id: 'project2',
+      name: 'Social Network (Mạng xã hội đa nền tảng)',
+      githubUrl: 'https://github.com/Hongtruongbvn/socal-media-backend',
+      githubBackendUrl: 'https://github.com/Hongtruongbvn/socal-media-backend',
+      githubFrontendUrl: 'https://github.com/Hongtruongbvn/socal-media-frontend',
+      deployUrl: 'https://socal-media-frontend.vercel.app/',
+      images: [
+        {
+          url: `${BACKEND_BASE}/public/project2/1.png`,
+          title: 'Giao Diện Bảng Tin Hoạt Động (Social Newsfeed)',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-indigo-900/40 to-blue-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Sparkles className="w-10 h-10 text-indigo-400 mb-3" />
+              <span className="text-xs font-bold text-indigo-200">Interactive Newsfeed</span>
+              <span className="text-[10px] text-indigo-400/80 mt-1.5 leading-relaxed">Chia sẻ bài viết, thả cảm xúc, bình luận cập nhật thời gian thực</span>
+            </div>
+          )
+        },
+        {
+          url: `${BACKEND_BASE}/public/project2/2.png`,
+          title: 'Hệ Thống Phòng Chat Nhóm Đa Kênh (Discord Style)',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Bot className="w-10 h-10 text-purple-400 mb-3" />
+              <span className="text-xs font-bold text-purple-200">Bilingual Group Chat channels</span>
+              <span className="text-[10px] text-purple-400/80 mt-1.5 leading-relaxed">Xử lý phòng chat voice và chat văn bản theo thời gian thực (Websocket)</span>
+            </div>
+          )
+        },
+        {
+          url: `${BACKEND_BASE}/public/project2/3.png`,
+          title: 'Giao Diện Thiết Bị Di Động (React Native Client)',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-cyan-900/40 to-blue-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Phone className="w-10 h-10 text-cyan-400 mb-3" />
+              <span className="text-xs font-bold text-cyan-200">Native Mobile Client UX</span>
+              <span className="text-[10px] text-cyan-400/80 mt-1.5 leading-relaxed">Khả năng hoạt động tối ưu đa nền tảng với hiệu năng bản xứ mượt mà</span>
+            </div>
+          )
+        }
+      ]
+    },
+    project3: {
+      id: 'project3',
+      name: 'Bus Ticket Management (Hệ thống bán vé xe khách)',
+      githubUrl: 'https://github.com/Hongtruongbvn/bus_ticket-.git',
+      images: [
+        {
+          url: `${BACKEND_BASE}/public/project3/1.png`,
+          title: 'Giao Diện Đặt Vé & Bản Đồ Sơ Đồ Chọn Ghế Trực Quan',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-teal-900/40 to-emerald-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Layers className="w-10 h-10 text-teal-400 mb-3" />
+              <span className="text-xs font-bold text-teal-200">Interactive Seat Selection</span>
+              <span className="text-[10px] text-teal-400/80 mt-1.5 leading-relaxed">Chọn chỗ ngồi trực quan, áp dụng mã giảm giá và tính toán biểu phí</span>
+            </div>
+          )
+        },
+        {
+          url: `${BACKEND_BASE}/public/project3/2.png`,
+          title: 'Hệ Thống Phân Lộ Trình & Điều Phối Tài Xế',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-emerald-900/40 to-green-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <MapPin className="w-10 h-10 text-emerald-400 mb-3" />
+              <span className="text-xs font-bold text-emerald-200">Route Scheduling & Dispatch</span>
+              <span className="text-[10px] text-emerald-400/80 mt-1.5 leading-relaxed">Vận hành xe khách liên tỉnh, định vị vị trí xe và phân chia lịch trực tài xế</span>
+            </div>
+          )
+        },
+        {
+          url: `${BACKEND_BASE}/public/project3/3.png`,
+          title: 'Biểu Đồ Doanh Thu & Hệ Thống Tự Động Chia Hoa Hồng',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-cyan-900/40 to-emerald-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Sparkles className="w-10 h-10 text-cyan-400 mb-3" />
+              <span className="text-xs font-bold text-cyan-200">Revenue Analytics Report</span>
+              <span className="text-[10px] text-cyan-400/80 mt-1.5 leading-relaxed">Báo cáo doanh số bán vé, dòng tiền hoa hồng tự động phân phối nhà xe</span>
+            </div>
+          )
+        }
+      ]
+    }
   };
 
-  // Component Live Box trình chiếu đa phương tiện cho từng dự án
+  // Component Live Box nâng cấp: Hiển thị mảng ảnh động, margin chuẩn chỉ, gắn link trực tiếp
   const LiveBox: React.FC<{ projectId: string }> = ({ projectId }) => {
-    const images = PROJECT_GALLERIES[projectId];
-    if (!images) return null;
+    const project = PROJECTS_DATA[projectId];
+    if (!project || !project.images || project.images.length === 0) return null;
 
     const [activeIndex, setActiveIndex] = useState<number>(0);
     const [imageStates, setImageStates] = useState<Record<number, 'loading' | 'success' | 'error'>>({});
@@ -291,35 +322,35 @@ export default function App() {
     };
 
     const nextSlide = () => {
-      setActiveIndex((prev) => (prev + 1) % images.length);
+      setActiveIndex((prev) => (prev + 1) % project.images.length);
     };
 
     const prevSlide = () => {
-      setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+      setActiveIndex((prev) => (prev - 1 + project.images.length) % project.images.length);
     };
 
-    const currentImage = images[activeIndex];
+    const currentImage = project.images[activeIndex];
     const isError = imageStates[activeIndex] === 'error' || !imageStates[activeIndex];
 
     return (
-      <div className="mt-4 border border-slate-800/80 bg-slate-950/60 rounded-2xl overflow-hidden shadow-lg transition-all max-w-lg w-full">
+      <div className="my-4 border border-slate-800 bg-slate-950/80 rounded-2xl overflow-hidden shadow-xl transition-all max-w-lg w-full flex flex-col">
         {/* Tiêu đề Live Box */}
-        <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 py-2.5 flex items-center justify-between">
+        <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Live Box Trình Chiếu Giao Diện</span>
+            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Demo: {project.name}</span>
           </div>
-          <span className="text-[10px] text-slate-500 font-medium">
-            {activeIndex + 1} / {images.length}
+          <span className="text-[10px] text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded">
+            {activeIndex + 1} / {project.images.length}
           </span>
         </div>
 
         {/* Khung chứa ảnh / SVG Fallback */}
-        <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden group">
+        <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden group border-b border-slate-900">
           {/* Nút lướt ảnh trái */}
           <button 
             onClick={prevSlide}
-            className="absolute left-2.5 z-10 p-1.5 rounded-full bg-black/60 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute left-3 z-10 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
           >
             <ChevronLeft size={16} />
           </button>
@@ -334,14 +365,14 @@ export default function App() {
                 alt={currentImage.title}
                 onLoad={() => handleImageLoad(activeIndex)}
                 onError={() => handleImageError(activeIndex)}
-                className="w-full h-full object-cover transition-all"
+                className="w-full h-full object-cover transition-all duration-300"
               />
               <button 
                 onClick={() => {
                   setLightboxImage(currentImage.url);
                   setLightboxTitle(currentImage.title);
                 }}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-3 right-3 p-2 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
                 title="Phóng to ảnh"
               >
                 <Maximize2 size={14} />
@@ -352,42 +383,93 @@ export default function App() {
           {/* Nút lướt ảnh phải */}
           <button 
             onClick={nextSlide}
-            className="absolute right-2.5 z-10 p-1.5 rounded-full bg-black/60 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute right-3 z-10 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
           >
             <ChevronRight size={16} />
           </button>
         </div>
 
-        {/* Tên ảnh mô tả */}
-        <div className="p-3 bg-slate-900/20 flex items-start gap-2.5 border-t border-slate-800/40">
+        {/* Tên mô tả chi tiết ảnh */}
+        <div className="p-3.5 bg-slate-950/40 flex items-start gap-2.5 border-b border-slate-900/50">
           <Info size={14} className="text-cyan-400 shrink-0 mt-0.5" />
           <p className="text-xs text-slate-300 font-medium leading-relaxed">
             {currentImage.title}
           </p>
         </div>
+
+        {/* CÁC NÚT KẾT NỐI TRỰC TIẾP (ẤN LÀ QUA TRANG LUÔN) */}
+        <div className="p-3 bg-slate-900/40 flex flex-wrap gap-2 justify-end">
+          {/* Nút Github */}
+          {project.githubBackendUrl && project.githubFrontendUrl ? (
+            <>
+              <a 
+                href={project.githubBackendUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-semibold transition-all"
+              >
+                <Code size={13} className="text-indigo-400" />
+                <span>Backend Git</span>
+              </a>
+              <a 
+                href={project.githubFrontendUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-semibold transition-all"
+              >
+                <Layers className="text-cyan-400" size={13} />
+                <span>Frontend Git</span>
+              </a>
+            </>
+          ) : (
+            <a 
+              href={project.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-semibold transition-all"
+            >
+              <GithubIcon size={13} className="text-slate-400" />
+              <span>GitHub Repository</span>
+            </a>
+          )}
+
+          {/* Nút Demo Deploy (Nếu có) */}
+          {project.deployUrl && (
+            <a 
+              href={project.deployUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/10"
+            >
+              <ExternalLink size={13} />
+              <span>Chạy Bản Demo</span>
+            </a>
+          )}
+        </div>
       </div>
     );
   };
 
-  // 2. COMPONENT LIVE BOX ĐỂ LOAD ẢNH CHÂN DUNG TỪ public/user/
+  // Component Live Box hiển thị ảnh chân dung của Trưởng (Chỉ lấy khi người dùng hỏi giới thiệu bản thân)
   const UserPhotoBox: React.FC = () => {
-    const imageUrl = `${BACKEND_BASE}/public/user/avatar.png`; // hoặc avatar.jpg
+    const imageUrl = `${BACKEND_BASE}/public/user/avatar.png`;
     const [imageState, setImageState] = useState<'loading' | 'success' | 'error'>('loading');
 
     return (
-      <div className="mt-4 border border-slate-800/80 bg-slate-950/60 rounded-2xl overflow-hidden shadow-lg transition-all max-w-xs w-full">
+      <div className="my-4 border border-slate-800 bg-slate-950/80 rounded-2xl overflow-hidden shadow-xl transition-all max-w-xs w-full flex flex-col">
         {/* Tiêu đề Box */}
-        <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 py-2 flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Hình ảnh cá nhân</span>
+        <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
+          <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Ảnh Chân Dung</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
         </div>
 
         {/* Khung chứa ảnh / Fallback SVG */}
         <div className="relative aspect-square w-full bg-slate-950 flex items-center justify-center overflow-hidden group">
           {imageState === 'error' ? (
-            <div className="w-full h-full bg-gradient-to-br from-indigo-900/30 to-purple-900/30 flex flex-col items-center justify-center p-4 text-center">
+            <div className="w-full h-full bg-gradient-to-br from-indigo-900/30 to-purple-900/30 flex flex-col items-center justify-center p-6 text-center">
               <User className="w-16 h-16 text-indigo-400 mb-3 animate-pulse" />
               <span className="text-xs font-bold text-indigo-200">Phạm Hồng Trưởng</span>
-              <span className="text-[10px] text-indigo-400 mt-1">Fullstack Engineer</span>
+              <span className="text-[10px] text-indigo-400/80 mt-1 leading-relaxed">Fullstack Engineer</span>
             </div>
           ) : (
             <>
@@ -403,7 +485,7 @@ export default function App() {
                   setLightboxImage(imageUrl);
                   setLightboxTitle("Ảnh chân dung Phạm Hồng Trưởng");
                 }}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2.5 right-2.5 p-2 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
                 title="Phóng to ảnh"
               >
                 <Maximize2 size={14} />
@@ -456,7 +538,7 @@ export default function App() {
                   </span>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-400 italic">
+              <p className="text-[11px] text-slate-400 italic leading-relaxed">
                 Công cụ quản lý: Trello, Jira, Postman, Swagger. Kỹ năng mềm: Làm việc nhóm, Giải quyết vấn đề, Tư duy logic.
               </p>
             </div>
@@ -571,13 +653,17 @@ export default function App() {
               const hasDownloadLink = msg.content.includes(downloadCvUrl);
               const lowerContent = msg.content.toLowerCase();
 
-              // Tự động kiểm tra xem AI đang nhắc đến dự án cụ thể nào để đính kèm Live Box tương ứng
-              const isProject1 = lowerContent.includes('mầm non') || lowerContent.includes('mam non') || lowerContent.includes('kindergarten');
-              const isProject2 = lowerContent.includes('social') || lowerContent.includes('socal') || lowerContent.includes('mạng xã hội');
-              const isProject3 = lowerContent.includes('bus') || lowerContent.includes('vé xe') || lowerContent.includes('ve xe') || lowerContent.includes('ticket');
+              // Chỉ kích hoạt Live Box khi Trợ lý AI đang trả lời (Assistant) 
+              // và tin nhắn của AI chứa từ khóa nhắc đến dự án cụ thể.
+              // KHÔNG HIỂN THỊ LIVE BOX Ở TIN NHẮN MỞ ĐẦU (id === 1) theo yêu cầu!
+              const showMediaBox = msg.role === 'assistant' && msg.id !== 1 && !msg.isError;
+
+              const isProject1 = showMediaBox && (lowerContent.includes('mầm non') || lowerContent.includes('mam non') || lowerContent.includes('kindergarten'));
+              const isProject2 = showMediaBox && (lowerContent.includes('social') || lowerContent.includes('socal') || lowerContent.includes('mạng xã hội'));
+              const isProject3 = showMediaBox && (lowerContent.includes('bus') || lowerContent.includes('vé xe') || lowerContent.includes('ve xe') || lowerContent.includes('ticket'));
               
               // Kiểm tra xem có đang giới thiệu bản thân bạn là ai không
-              const isSelfIntro = lowerContent.includes('bạn là ai') || lowerContent.includes('giới thiệu') || lowerContent.includes('who are you') || lowerContent.includes('introduce') || lowerContent.includes('phạm hồng trưởng') || lowerContent.includes('pham hong truong');
+              const isSelfIntro = showMediaBox && (lowerContent.includes('bạn là ai') || lowerContent.includes('giới thiệu') || lowerContent.includes('who are you') || lowerContent.includes('introduce') || lowerContent.includes('phạm hồng trưởng') || lowerContent.includes('pham hong truong'));
 
               return (
                 <div 
@@ -604,15 +690,11 @@ export default function App() {
                     }`}>
                       {msg.content}
 
-                      {/* ĐÍNH KÈM LIVE BOX TRÌNH CHIẾU CHO TỪNG DỰ ÁN */}
-                      {msg.role === 'assistant' && !msg.isError && (
-                        <>
-                          {isProject1 && <LiveBox projectId="project1" />}
-                          {isProject2 && <LiveBox projectId="project2" />}
-                          {isProject3 && <LiveBox projectId="project3" />}
-                          {isSelfIntro && !isProject1 && !isProject2 && !isProject3 && <UserPhotoBox />}
-                        </>
-                      )}
+                      {/* ĐÍNH KÈM LIVE BOX TRÌNH CHIẾU CHO TỪNG DỰ ÁN KHI ĐƯỢC NHẮC ĐẾN */}
+                      {isProject1 && <LiveBox projectId="project1" />}
+                      {isProject2 && <LiveBox projectId="project2" />}
+                      {isProject3 && <LiveBox projectId="project3" />}
+                      {isSelfIntro && !isProject1 && !isProject2 && !isProject3 && <UserPhotoBox />}
 
                       {/* NÚT TẢI FILE: Tự hiển thị khi phát hiện link tải CV trong đoạn chat */}
                       {msg.role === 'assistant' && hasDownloadLink && !msg.isError && (
@@ -721,7 +803,7 @@ export default function App() {
       {/* LIGHTBOX PHÓNG TO ẢNH (MODAL) */}
       {lightboxImage && (
         <div 
-          className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4"
+          className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4 animate-fade-in"
           onClick={() => setLightboxImage(null)}
         >
           <button 
@@ -734,7 +816,7 @@ export default function App() {
           <img 
             src={lightboxImage} 
             alt={lightboxTitle} 
-            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl transition-transform duration-300"
           />
           
           <p className="mt-4 text-sm font-semibold text-slate-300 tracking-wide text-center max-w-2xl bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
