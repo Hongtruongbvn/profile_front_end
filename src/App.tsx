@@ -19,7 +19,8 @@ import {
   Maximize2,
   Eye,
   Layers,
-  Code
+  Code,
+  Play
 } from 'lucide-react';
 
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = "" }) => (
@@ -48,9 +49,11 @@ interface Message {
   isError?: boolean;
 }
 
-interface ProjectImage {
+// Cải tiến cấu trúc Media để hỗ trợ cả Video và Ảnh
+interface ProjectMedia {
   url: string;
   title: string;
+  type?: 'image' | 'video'; // Tự động phát hiện hoặc định nghĩa thủ công
   fallbackSvg: React.ReactNode;
 }
 
@@ -61,14 +64,14 @@ interface ProjectDetail {
   deployUrl?: string;
   githubBackendUrl?: string;
   githubFrontendUrl?: string;
-  images: ProjectImage[];
+  media: ProjectMedia[]; // Đổi từ "images" thành "media" để bao gồm cả video
 }
 
 const SUGGESTED_QUESTIONS: string[] = [
   "Bạn là ai?",
+  "Bạn có dự án nhỏ hay dự án Golang, Winform nào không?",
   "Cho mình xem chi tiết dự án Mầm non",
-  "Trình chiếu ảnh dự án Social Network",
-  "Dự án Bus Ticket có giao diện như thế nào?"
+  "Trình chiếu ảnh và video dự án Social Network"
 ];
 
 export default function App() {
@@ -76,7 +79,7 @@ export default function App() {
     { 
       id: 1, 
       role: 'assistant', 
-      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về 3 dự án lớn: Mầm non, Social Network, Bus Ticket hoặc gõ "bạn là ai" để tôi trình chiếu ảnh giao diện và chân dung thực tế cho bạn xem nhé!',
+      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về 3 dự án lớn: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video giao diện trực quan nhé!',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -85,13 +88,13 @@ export default function App() {
   const [corsErrorOccurred, setCorsErrorOccurred] = useState<boolean>(false);
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
   
-  // Trạng thái Lightbox phóng to ảnh
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  // Trạng thái Lightbox phóng to ảnh hoặc video
+  const [lightboxMedia, setLightboxMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState<string>('');
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Cấu hình URL cơ sở kết nối Backend trên Render mới của bạn
+  // Cấu hình URL cơ sở kết nối Backend trên Render chính thức
   const BACKEND_BASE = 'https://profile-back-end.onrender.com';
   const downloadCvUrl = `${BACKEND_BASE}/public/CV_PhamHongTruong.pdf`;
   const backendUrl = `${BACKEND_BASE}/chat`;
@@ -176,20 +179,39 @@ export default function App() {
     setShowClearConfirm(false);
   };
 
-  // Cấu trúc quản lý danh sách ảnh động không giới hạn số lượng ảnh
+  // Hàm tự động phát hiện loại file dựa vào phần mở rộng của đường dẫn URL (Ảnh hay Video)
+  const getMediaType = (url: string): 'image' | 'video' => {
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.m4v'];
+    const lowercaseUrl = url.toLowerCase();
+    const isVideo = videoExtensions.some(ext => lowercaseUrl.endsWith(ext) || lowercaseUrl.includes(`type=video`) || lowercaseUrl.includes(`.mp4`));
+    return isVideo ? 'video' : 'image';
+  };
+
+  // Cấu hình dữ liệu dự án linh động (Dễ dàng hỗ trợ cả .png, .jpg, .mp4)
   const PROJECTS_DATA: Record<string, ProjectDetail> = {
     project1: {
       id: 'project1',
       name: 'Kindergarten Management (Quản lý trường mầm non)',
       githubUrl: 'https://github.com/Hongtruongbvn/quan_ly_truong_mam_non',
       deployUrl: 'https://quan-ly-truong-mam-non.onrender.com/',
-      images: [
+      media: [
+        {
+          url: `${BACKEND_BASE}/public/project1/demo.mp4`, // Ví dụ bạn có file video demo của dự án mầm non
+          title: 'Video Demo: Trải Nghiệm Hệ Thống Quản Lý Trường Mầm Non',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-pink-900/40 to-rose-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Play className="w-12 h-12 text-rose-400 mb-3 animate-pulse" />
+              <span className="text-xs font-bold text-rose-200">Video Demo Kindergarten System</span>
+              <span className="text-[10px] text-rose-400/80 mt-1.5 leading-relaxed">Nhấp để xem video quy trình vận hành và tương tác giữa phụ huynh và nhà trường</span>
+            </div>
+          )
+        },
         {
           url: `${BACKEND_BASE}/public/project1/1.png`,
           title: 'Bảng Điều Khiển Quản Trị (Admin Dashboard)',
           fallbackSvg: (
             <div className="w-full h-full bg-gradient-to-br from-pink-900/40 to-rose-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Layers className="w-10 h-10 text-rose-400 mb-3 animate-pulse" />
+              <Layers className="w-10 h-10 text-rose-400 mb-3" />
               <span className="text-xs font-bold text-rose-200">Kindergarten Admin Dashboard</span>
               <span className="text-[10px] text-rose-400/80 mt-1.5 leading-relaxed">Hệ thống quản lý thời khóa biểu, tài chính, giáo viên và học sinh trực quan</span>
             </div>
@@ -205,17 +227,6 @@ export default function App() {
               <span className="text-[10px] text-amber-400/80 mt-1.5 leading-relaxed">Giám sát điểm danh, sức khỏe học sinh và phân chia lớp học</span>
             </div>
           )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project1/3.png`,
-          title: 'Cổng Live Camera & Thanh Toán Học Phí Trực Tuyến',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-red-900/40 to-pink-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Eye className="w-10 h-10 text-pink-400 mb-3" />
-              <span className="text-xs font-bold text-pink-200">Live Camera Monitor</span>
-              <span className="text-[10px] text-pink-400/80 mt-1.5 leading-relaxed">Tích hợp camera giám sát trực tiếp dành cho phụ huynh và cổng học phí</span>
-            </div>
-          )
         }
       ]
     },
@@ -226,7 +237,18 @@ export default function App() {
       githubBackendUrl: 'https://github.com/Hongtruongbvn/socal-media-backend',
       githubFrontendUrl: 'https://github.com/Hongtruongbvn/socal-media-frontend',
       deployUrl: 'https://socal-media-frontend.vercel.app/',
-      images: [
+      media: [
+        {
+          url: `${BACKEND_BASE}/public/project2/demo.mp4`, // Bạn chỉ cần bỏ tệp .mp4 bất kỳ vào thư mục project2
+          title: 'Video Demo: Giao Diện Và Tương Tác Socket Thực Tế Của Mạng Xã Hội',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-indigo-900/40 to-blue-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Play className="w-12 h-12 text-indigo-400 mb-3 animate-pulse" />
+              <span className="text-xs font-bold text-indigo-200">Video Demo Social Network App</span>
+              <span className="text-[10px] text-indigo-400/80 mt-1.5 leading-relaxed">Trình diễn bảng tin, phòng chat voice Discord-style và nhắn tin tức thì</span>
+            </div>
+          )
+        },
         {
           url: `${BACKEND_BASE}/public/project2/1.png`,
           title: 'Giao Diện Bảng Tin Hoạt Động (Social Newsfeed)',
@@ -244,19 +266,8 @@ export default function App() {
           fallbackSvg: (
             <div className="w-full h-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 flex flex-col items-center justify-center p-6 text-center">
               <Bot className="w-10 h-10 text-purple-400 mb-3" />
-              <span className="text-xs font-bold text-purple-200">Bilingual Group Chat channels</span>
+              <span className="text-xs font-bold text-purple-200">Group Chat Channels</span>
               <span className="text-[10px] text-purple-400/80 mt-1.5 leading-relaxed">Xử lý phòng chat voice và chat văn bản theo thời gian thực (Websocket)</span>
-            </div>
-          )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project2/3.png`,
-          title: 'Giao Diện Thiết Bị Di Động (React Native Client)',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-cyan-900/40 to-blue-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Phone className="w-10 h-10 text-cyan-400 mb-3" />
-              <span className="text-xs font-bold text-cyan-200">Native Mobile Client UX</span>
-              <span className="text-[10px] text-cyan-400/80 mt-1.5 leading-relaxed">Khả năng hoạt động tối ưu đa nền tảng với hiệu năng bản xứ mượt mà</span>
             </div>
           )
         }
@@ -266,7 +277,18 @@ export default function App() {
       id: 'project3',
       name: 'Bus Ticket Management (Hệ thống bán vé xe khách)',
       githubUrl: 'https://github.com/Hongtruongbvn/bus_ticket-.git',
-      images: [
+      media: [
+        {
+          url: `${BACKEND_BASE}/public/project3/demo.mp4`, // Bạn chỉ cần bỏ tệp .mp4 bất kỳ vào thư mục project3
+          title: 'Video Demo: Hệ Thống Đặt Vé Xe Khách & Tự Động Chia Hoa Hồng',
+          fallbackSvg: (
+            <div className="w-full h-full bg-gradient-to-br from-teal-900/40 to-emerald-900/40 flex flex-col items-center justify-center p-6 text-center">
+              <Play className="w-12 h-12 text-teal-400 mb-3 animate-pulse" />
+              <span className="text-xs font-bold text-teal-200">Video Demo Bus Ticket App</span>
+              <span className="text-[10px] text-teal-400/80 mt-1.5 leading-relaxed">Quy trình đặt vé, chọn sơ đồ ghế ngồi trực quan và thống kê doanh thu nhà xe</span>
+            </div>
+          )
+        },
         {
           url: `${BACKEND_BASE}/public/project3/1.png`,
           title: 'Giao Diện Đặt Vé & Bản Đồ Sơ Đồ Chọn Ghế Trực Quan',
@@ -288,48 +310,38 @@ export default function App() {
               <span className="text-[10px] text-emerald-400/80 mt-1.5 leading-relaxed">Vận hành xe khách liên tỉnh, định vị vị trí xe và phân chia lịch trực tài xế</span>
             </div>
           )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project3/3.png`,
-          title: 'Biểu Đồ Doanh Thu & Hệ Thống Tự Động Chia Hoa Hồng',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-cyan-900/40 to-emerald-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Sparkles className="w-10 h-10 text-cyan-400 mb-3" />
-              <span className="text-xs font-bold text-cyan-200">Revenue Analytics Report</span>
-              <span className="text-[10px] text-cyan-400/80 mt-1.5 leading-relaxed">Báo cáo doanh số bán vé, dòng tiền hoa hồng tự động phân phối nhà xe</span>
-            </div>
-          )
         }
       ]
     }
   };
 
-  // Component Live Box nâng cấp: Trình chiếu ảnh động, margin chuẩn, nút chuyển trang trực tiếp
+  // Component Live Box nâng cấp: Trình chiếu mượt mà cả VIDEO và ẢNH, nút lướt và liên kết trực tiếp
   const LiveBox: React.FC<{ projectId: string }> = ({ projectId }) => {
     const project = PROJECTS_DATA[projectId];
-    if (!project || !project.images || project.images.length === 0) return null;
+    if (!project || !project.media || project.media.length === 0) return null;
 
     const [activeIndex, setActiveIndex] = useState<number>(0);
-    const [imageStates, setImageStates] = useState<Record<number, 'success' | 'error'>>({});
+    const [mediaStates, setMediaStates] = useState<Record<number, 'success' | 'error'>>({});
 
-    const handleImageLoad = (index: number) => {
-      setImageStates(prev => ({ ...prev, [index]: 'success' }));
+    const handleMediaLoad = (index: number) => {
+      setMediaStates(prev => ({ ...prev, [index]: 'success' }));
     };
 
-    const handleImageError = (index: number) => {
-      setImageStates(prev => ({ ...prev, [index]: 'error' }));
+    const handleMediaError = (index: number) => {
+      setMediaStates(prev => ({ ...prev, [index]: 'error' }));
     };
 
     const nextSlide = () => {
-      setActiveIndex((prev) => (prev + 1) % project.images.length);
+      setActiveIndex((prev) => (prev + 1) % project.media.length);
     };
 
     const prevSlide = () => {
-      setActiveIndex((prev) => (prev - 1 + project.images.length) % project.images.length);
+      setActiveIndex((prev) => (prev - 1 + project.media.length) % project.media.length);
     };
 
-    const currentImage = project.images[activeIndex];
-    const isError = imageStates[activeIndex] === 'error';
+    const currentMedia = project.media[activeIndex];
+    const mediaType = getMediaType(currentMedia.url);
+    const isError = mediaStates[activeIndex] === 'error';
 
     return (
       <div className="my-4 border border-slate-800 bg-slate-950/80 rounded-2xl overflow-hidden shadow-xl transition-all max-w-lg w-full flex flex-col">
@@ -340,37 +352,51 @@ export default function App() {
             <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Demo: {project.name}</span>
           </div>
           <span className="text-[10px] text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded">
-            {activeIndex + 1} / {project.images.length}
+            {activeIndex + 1} / {project.media.length}
           </span>
         </div>
 
-        {/* Khung chứa ảnh / Fallback */}
+        {/* Khung trình chiếu Đa Phương Tiện (Ảnh hoặc Video) */}
         <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden group border-b border-slate-900">
           <button 
             onClick={prevSlide}
-            className="absolute left-3 z-10 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
+            className="absolute left-3 z-20 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
           >
             <ChevronLeft size={16} />
           </button>
 
           {isError ? (
-            currentImage.fallbackSvg
+            currentMedia.fallbackSvg
           ) : (
             <>
-              <img 
-                src={currentImage.url} 
-                alt={currentImage.title}
-                onLoad={() => handleImageLoad(activeIndex)}
-                onError={() => handleImageError(activeIndex)}
-                className="w-full h-full object-cover transition-all duration-300"
-              />
+              {mediaType === 'video' ? (
+                <video 
+                  src={currentMedia.url}
+                  controls
+                  autoPlay={false}
+                  muted
+                  loop
+                  onLoadedData={() => handleMediaLoad(activeIndex)}
+                  onError={() => handleMediaError(activeIndex)}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <img 
+                  src={currentMedia.url} 
+                  alt={currentMedia.title}
+                  onLoad={() => handleMediaLoad(activeIndex)}
+                  onError={() => handleMediaError(activeIndex)}
+                  className="w-full h-full object-cover transition-all duration-300"
+                />
+              )}
+
               <button 
                 onClick={() => {
-                  setLightboxImage(currentImage.url);
-                  setLightboxTitle(currentImage.title);
+                  setLightboxMedia({ url: currentMedia.url, type: mediaType });
+                  setLightboxTitle(currentMedia.title);
                 }}
-                className="absolute top-3 right-3 p-2 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
-                title="Phóng to ảnh"
+                className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
+                title="Phóng to"
               >
                 <Maximize2 size={14} />
               </button>
@@ -379,7 +405,7 @@ export default function App() {
 
           <button 
             onClick={nextSlide}
-            className="absolute right-3 z-10 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
+            className="absolute right-3 z-20 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
           >
             <ChevronRight size={16} />
           </button>
@@ -389,11 +415,11 @@ export default function App() {
         <div className="p-3.5 bg-slate-950/40 flex items-start gap-2.5 border-b border-slate-900/50">
           <Info size={14} className="text-cyan-400 shrink-0 mt-0.5" />
           <p className="text-xs text-slate-300 font-medium leading-relaxed">
-            {currentImage.title}
+            {currentMedia.title}
           </p>
         </div>
 
-        {/* HÀNH ĐỘNG GẮN LINK TRỰC TIẾP (ẤN LÀ CHUYỂN TRANG NGAY) */}
+        {/* CÁC NÚT KẾT NỐI LIÊN KẾT TRỰC TIẾP */}
         <div className="p-3 bg-slate-900/40 flex flex-wrap gap-2 justify-end">
           {project.githubBackendUrl && project.githubFrontendUrl ? (
             <>
@@ -444,7 +470,7 @@ export default function App() {
     );
   };
 
-  // Component hiển thị chân dung của Trưởng khi gọi thông tin giới thiệu bản thân
+  // Component hiển thị chân dung cá nhân của Trưởng
   const UserPhotoBox: React.FC = () => {
     const imageUrl = `${BACKEND_BASE}/public/user/avatar.png`;
     const [imageState, setImageState] = useState<'success' | 'error'>('success');
@@ -473,7 +499,7 @@ export default function App() {
               />
               <button 
                 onClick={() => {
-                  setLightboxImage(imageUrl);
+                  setLightboxMedia({ url: imageUrl, type: 'image' });
                   setLightboxTitle("Ảnh chân dung Phạm Hồng Trưởng");
                 }}
                 className="absolute top-2.5 right-2.5 p-2 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
@@ -527,6 +553,7 @@ export default function App() {
               </div>
             </div>
 
+            {/* Tài liệu đính kèm */}
             <div className="space-y-2">
               <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Tài liệu đính kèm</span>
               <a 
@@ -548,6 +575,36 @@ export default function App() {
               </a>
             </div>
 
+            {/* Các dự án phụ (Golang & Winform) */}
+            <div className="space-y-2.5 bg-slate-900/20 p-4 rounded-xl border border-slate-800">
+              <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase block">Dự án phụ tiêu biểu</span>
+              <div className="space-y-2 text-xs">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-semibold text-indigo-400 block">⚡ Golang (Backend & DevOps)</span>
+                  <div className="flex flex-col gap-1 pl-2 border-l border-indigo-500/30">
+                    <a href="https://github.com/Hongtruongbvn/back-devop" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-indigo-300 flex items-center gap-1">
+                      <Code size={12} /> DevOps Go <ExternalLink size={10} />
+                    </a>
+                    <a href="https://github.com/Hongtruongbvn/goalnd_24-05_be" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-indigo-300 flex items-center gap-1">
+                      <Code size={12} /> Go Base BE <ExternalLink size={10} />
+                    </a>
+                    <a href="https://github.com/Hongtruongbvn/goalnd_final_be" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-indigo-300 flex items-center gap-1">
+                      <Code size={12} /> Go Final BE <ExternalLink size={10} />
+                    </a>
+                  </div>
+                </div>
+                <div className="space-y-1 pt-1">
+                  <span className="text-[10px] font-semibold text-emerald-400 block">⚡ Windows Application (C#)</span>
+                  <div className="flex flex-col gap-1 pl-2 border-l border-emerald-500/30">
+                    <a href="https://github.com/truongbvnedu/Child_MNG" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-emerald-300 flex items-center gap-1">
+                      <Layers size={12} /> Child Management <ExternalLink size={10} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Thông tin liên hệ */}
             <div className="space-y-3 bg-slate-900/30 p-4 rounded-xl border border-slate-800">
               <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase block">Thông tin kết nối</span>
               <div className="space-y-2.5 text-xs text-slate-300">
@@ -579,7 +636,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="text-[10px] text-slate-500 flex items-center gap-1.5 pt-4 border-t border-slate-900">
+          <div className="text-[10px] text-slate-500 flex items-center gap-1.5 pt-4 border-t border-slate-900 font-sans">
             <Info size={12} />
             <span>Xây dựng bằng NestJS, Mongoose, Gemini</span>
           </div>
@@ -637,7 +694,7 @@ export default function App() {
               // CHỈ KÍCH HOẠT BOX KHI AI ĐANG TRẢ LỜI VÀ KHÔNG PHẢI LÀ LỜI CHÀO MỞ ĐẦU (id !== 1)
               const showMediaBox = msg.role === 'assistant' && msg.id !== 1 && !msg.isError;
 
-              // 🎯 GIẢI PHÁP QUÉT THÔNG MINH: Quét từ khóa tiếng Việt kết hợp tên tệp/thư mục hệ thống từ Backend
+              // GIẢI PHÁP QUÉT THÔNG MINH: Quét từ khóa tiếng Việt kết hợp tên tệp/thư mục hệ thống từ Backend
               const isProject1 = showMediaBox && (
                 lowerContent.includes('project1') || 
                 lowerContent.includes('mầm non') || 
@@ -681,7 +738,7 @@ export default function App() {
                     {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                   </div>
 
-                  <div className="space-y-1.5 flex-1 max-w-full">
+                  <div className="space-y-1.5 flex-1 max-w-full font-sans">
                     <div className={`p-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                       msg.role === 'user' 
                         ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-none shadow-md shadow-indigo-600/10' 
@@ -722,7 +779,7 @@ export default function App() {
             })}
 
             {isLoading && (
-              <div className="flex gap-3 max-w-[80%] mr-auto">
+              <div className="flex gap-3 max-w-[80%] mr-auto font-sans">
                 <div className="w-8 h-8 rounded-full bg-indigo-900/30 border border-indigo-700/50 text-indigo-400 flex items-center justify-center">
                   <Bot size={16} />
                 </div>
@@ -737,7 +794,7 @@ export default function App() {
             )}
             
             {corsErrorOccurred && (
-              <div className="bg-amber-950/40 border border-amber-900/40 p-4 rounded-xl flex items-start gap-3 max-w-[90%] mx-auto mt-2">
+              <div className="bg-amber-950/40 border border-amber-900/40 p-4 rounded-xl flex items-start gap-3 max-w-[90%] mx-auto mt-2 font-sans">
                 <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={18} />
                 <div className="text-xs text-amber-200 leading-relaxed">
                   <strong className="block text-amber-300 font-semibold mb-1">Mẹo xử lý kết nối (CORS):</strong>
@@ -753,7 +810,7 @@ export default function App() {
           </div>
 
           {/* Gợi ý câu hỏi nhanh */}
-          <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-900">
+          <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-900 font-sans">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               {SUGGESTED_QUESTIONS.map((q, idx) => (
                 <button
@@ -770,7 +827,7 @@ export default function App() {
           </div>
 
           {/* Form gửi câu hỏi */}
-          <div className="p-4 bg-slate-950 border-t border-slate-900">
+          <div className="p-4 bg-slate-950 border-t border-slate-900 font-sans">
             <form 
               onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} 
               className="flex gap-2 bg-slate-900/60 border border-slate-800 focus-within:border-indigo-500/80 focus-within:ring-1 focus-within:ring-indigo-500/30 rounded-2xl p-1.5 transition-all"
@@ -779,7 +836,7 @@ export default function App() {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Hỏi về dự án mầm non, mạng xã hội, bus ticket hoặc gõ 'tải CV'..."
+                placeholder="Hỏi về dự án mầm non, Golang, Winform, mạng xã hội, bus ticket..."
                 className="flex-1 bg-transparent border-transparent px-3 py-2 text-sm text-slate-200 outline-none placeholder:text-slate-500"
                 disabled={isLoading}
               />
@@ -798,24 +855,34 @@ export default function App() {
         </div>
       </div>
 
-      {/* MODAL PHÓNG TO ẢNH (LIGHTBOX) */}
-      {lightboxImage && (
+      {/* MODAL PHÓNG TO ĐA PHƯƠNG TIỆN (LIGHTBOX CHO CẢ ẢNH & VIDEO) */}
+      {lightboxMedia && (
         <div 
-          className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4"
-          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4 font-sans"
+          onClick={() => setLightboxMedia(null)}
         >
           <button 
             className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/85 border border-slate-800 text-slate-300 hover:text-white"
-            onClick={() => setLightboxImage(null)}
+            onClick={() => setLightboxMedia(null)}
           >
             <X size={20} />
           </button>
           
-          <img 
-            src={lightboxImage} 
-            alt={lightboxTitle} 
-            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
-          />
+          {lightboxMedia.type === 'video' ? (
+            <video 
+              src={lightboxMedia.url} 
+              controls 
+              autoPlay 
+              className="max-w-full max-h-[80vh] rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()} // Chặn tắt Lightbox khi click vào nút video
+            />
+          ) : (
+            <img 
+              src={lightboxMedia.url} 
+              alt={lightboxTitle} 
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            />
+          )}
           
           <p className="mt-4 text-sm font-semibold text-slate-300 tracking-wide text-center max-w-2xl bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
             {lightboxTitle}
@@ -825,7 +892,7 @@ export default function App() {
 
       {/* Modal xác nhận xóa lịch sử */}
       {showClearConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 font-sans">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex justify-between items-start">
               <h3 className="font-bold text-slate-200 flex items-center gap-2">
