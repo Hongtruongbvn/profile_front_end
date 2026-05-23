@@ -15,12 +15,9 @@ import {
   Phone,
   MapPin,
   ExternalLink,
-  ChevronLeft,
   Maximize2,
-  Eye,
   Layers,
-  Code,
-  Play
+  Code
 } from 'lucide-react';
 
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = "" }) => (
@@ -49,24 +46,6 @@ interface Message {
   isError?: boolean;
 }
 
-// Cải tiến cấu trúc Media để hỗ trợ cả Video và Ảnh
-interface ProjectMedia {
-  url: string;
-  title: string;
-  type?: 'image' | 'video'; // Tự động phát hiện hoặc định nghĩa thủ công
-  fallbackSvg: React.ReactNode;
-}
-
-interface ProjectDetail {
-  id: string;
-  name: string;
-  githubUrl: string;
-  deployUrl?: string;
-  githubBackendUrl?: string;
-  githubFrontendUrl?: string;
-  media: ProjectMedia[]; // Đổi từ "images" thành "media" để bao gồm cả video
-}
-
 const SUGGESTED_QUESTIONS: string[] = [
   "Bạn là ai?",
   "Bạn có dự án nhỏ hay dự án Golang, Winform nào không?",
@@ -74,12 +53,17 @@ const SUGGESTED_QUESTIONS: string[] = [
   "Trình chiếu ảnh và video dự án Social Network"
 ];
 
+// Hàm escape ký tự đặc biệt phục vụ việc xử lý Regex chính xác
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: 1, 
       role: 'assistant', 
-      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về 3 dự án lớn: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video giao diện trực quan nhé!',
+      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về các dự án: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video trực quan nhé!',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -88,13 +72,12 @@ export default function App() {
   const [corsErrorOccurred, setCorsErrorOccurred] = useState<boolean>(false);
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
   
-  // Trạng thái Lightbox phóng to ảnh hoặc video
+  // Trạng thái Lightbox phóng to đa phương tiện (Ảnh hoặc Video)
   const [lightboxMedia, setLightboxMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
-  const [lightboxTitle, setLightboxTitle] = useState<string>('');
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Cấu hình URL cơ sở kết nối Backend trên Render chính thức
+  // Cấu hình URL cơ sở kết nối Backend
   const BACKEND_BASE = 'https://profile-back-end.onrender.com';
   const downloadCvUrl = `${BACKEND_BASE}/public/CV_PhamHongTruong.pdf`;
   const backendUrl = `${BACKEND_BASE}/chat`;
@@ -172,350 +155,176 @@ export default function App() {
       { 
         id: 1, 
         role: 'assistant', 
-        content: 'Lịch sử trò chuyện đã được xóa thành công. Hãy đặt câu hỏi tiếp theo cho tôi nhé! ✨',
+        content: 'Lịch sử trò chuyện đã được xóa thành công. Tôi đã sẵn sàng nhận các câu hỏi mới từ bạn! ✨',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
     setShowClearConfirm(false);
   };
 
-  // Hàm tự động phát hiện loại file dựa vào phần mở rộng của đường dẫn URL (Ảnh hay Video)
+  // Hàm phát hiện loại tệp đa phương tiện dựa trên định dạng mở rộng
   const getMediaType = (url: string): 'image' | 'video' => {
     const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.m4v'];
     const lowercaseUrl = url.toLowerCase();
-    const isVideo = videoExtensions.some(ext => lowercaseUrl.endsWith(ext) || lowercaseUrl.includes(`type=video`) || lowercaseUrl.includes(`.mp4`));
+    const isVideo = videoExtensions.some(ext => lowercaseUrl.endsWith(ext) || lowercaseUrl.includes('.mp4') || lowercaseUrl.includes('type=video'));
     return isVideo ? 'video' : 'image';
   };
 
-  // Cấu hình dữ liệu dự án linh động (Dễ dàng hỗ trợ cả .png, .jpg, .mp4)
-  const PROJECTS_DATA: Record<string, ProjectDetail> = {
-    project1: {
-      id: 'project1',
-      name: 'Kindergarten Management (Quản lý trường mầm non)',
-      githubUrl: 'https://github.com/Hongtruongbvn/quan_ly_truong_mam_non',
-      deployUrl: 'https://quan-ly-truong-mam-non.onrender.com/',
-      media: [
-        {
-          url: `${BACKEND_BASE}/public/project1/demo.mp4`, // Ví dụ bạn có file video demo của dự án mầm non
-          title: 'Video Demo: Trải Nghiệm Hệ Thống Quản Lý Trường Mầm Non',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-pink-900/40 to-rose-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Play className="w-12 h-12 text-rose-400 mb-3 animate-pulse" />
-              <span className="text-xs font-bold text-rose-200">Video Demo Kindergarten System</span>
-              <span className="text-[10px] text-rose-400/80 mt-1.5 leading-relaxed">Nhấp để xem video quy trình vận hành và tương tác giữa phụ huynh và nhà trường</span>
-            </div>
-          )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project1/1.png`,
-          title: 'Bảng Điều Khiển Quản Trị (Admin Dashboard)',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-pink-900/40 to-rose-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Layers className="w-10 h-10 text-rose-400 mb-3" />
-              <span className="text-xs font-bold text-rose-200">Kindergarten Admin Dashboard</span>
-              <span className="text-[10px] text-rose-400/80 mt-1.5 leading-relaxed">Hệ thống quản lý thời khóa biểu, tài chính, giáo viên và học sinh trực quan</span>
-            </div>
-          )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project1/2.png`,
-          title: 'Hồ Sơ Chi Tiết Học Sinh & Giáo Viên',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-orange-900/40 to-amber-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <User className="w-10 h-10 text-amber-400 mb-3" />
-              <span className="text-xs font-bold text-amber-200">Student & Teacher Profiles</span>
-              <span className="text-[10px] text-amber-400/80 mt-1.5 leading-relaxed">Giám sát điểm danh, sức khỏe học sinh và phân chia lớp học</span>
-            </div>
-          )
-        }
-      ]
-    },
-    project2: {
-      id: 'project2',
-      name: 'Social Network (Mạng xã hội đa nền tảng)',
-      githubUrl: 'https://github.com/Hongtruongbvn/socal-media-backend',
-      githubBackendUrl: 'https://github.com/Hongtruongbvn/socal-media-backend',
-      githubFrontendUrl: 'https://github.com/Hongtruongbvn/socal-media-frontend',
-      deployUrl: 'https://socal-media-frontend.vercel.app/',
-      media: [
-        {
-          url: `${BACKEND_BASE}/public/project2/demo.mp4`, // Bạn chỉ cần bỏ tệp .mp4 bất kỳ vào thư mục project2
-          title: 'Video Demo: Giao Diện Và Tương Tác Socket Thực Tế Của Mạng Xã Hội',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-indigo-900/40 to-blue-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Play className="w-12 h-12 text-indigo-400 mb-3 animate-pulse" />
-              <span className="text-xs font-bold text-indigo-200">Video Demo Social Network App</span>
-              <span className="text-[10px] text-indigo-400/80 mt-1.5 leading-relaxed">Trình diễn bảng tin, phòng chat voice Discord-style và nhắn tin tức thì</span>
-            </div>
-          )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project2/1.png`,
-          title: 'Giao Diện Bảng Tin Hoạt Động (Social Newsfeed)',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-indigo-900/40 to-blue-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Sparkles className="w-10 h-10 text-indigo-400 mb-3" />
-              <span className="text-xs font-bold text-indigo-200">Interactive Newsfeed</span>
-              <span className="text-[10px] text-indigo-400/80 mt-1.5 leading-relaxed">Chia sẻ bài viết, thả cảm xúc, bình luận cập nhật thời gian thực</span>
-            </div>
-          )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project2/2.png`,
-          title: 'Hệ Thống Phòng Chat Nhóm Đa Kênh (Discord Style)',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Bot className="w-10 h-10 text-purple-400 mb-3" />
-              <span className="text-xs font-bold text-purple-200">Group Chat Channels</span>
-              <span className="text-[10px] text-purple-400/80 mt-1.5 leading-relaxed">Xử lý phòng chat voice và chat văn bản theo thời gian thực (Websocket)</span>
-            </div>
-          )
-        }
-      ]
-    },
-    project3: {
-      id: 'project3',
-      name: 'Bus Ticket Management (Hệ thống bán vé xe khách)',
-      githubUrl: 'https://github.com/Hongtruongbvn/bus_ticket-.git',
-      media: [
-        {
-          url: `${BACKEND_BASE}/public/project3/demo.mp4`, // Bạn chỉ cần bỏ tệp .mp4 bất kỳ vào thư mục project3
-          title: 'Video Demo: Hệ Thống Đặt Vé Xe Khách & Tự Động Chia Hoa Hồng',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-teal-900/40 to-emerald-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Play className="w-12 h-12 text-teal-400 mb-3 animate-pulse" />
-              <span className="text-xs font-bold text-teal-200">Video Demo Bus Ticket App</span>
-              <span className="text-[10px] text-teal-400/80 mt-1.5 leading-relaxed">Quy trình đặt vé, chọn sơ đồ ghế ngồi trực quan và thống kê doanh thu nhà xe</span>
-            </div>
-          )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project3/1.png`,
-          title: 'Giao Diện Đặt Vé & Bản Đồ Sơ Đồ Chọn Ghế Trực Quan',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-teal-900/40 to-emerald-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <Layers className="w-10 h-10 text-teal-400 mb-3" />
-              <span className="text-xs font-bold text-teal-200">Interactive Seat Selection</span>
-              <span className="text-[10px] text-teal-400/80 mt-1.5 leading-relaxed">Chọn chỗ ngồi trực quan, áp dụng mã giảm giá và tính toán biểu phí</span>
-            </div>
-          )
-        },
-        {
-          url: `${BACKEND_BASE}/public/project3/2.png`,
-          title: 'Hệ Thống Phân Lộ Trình & Điều Phối Tài Xế',
-          fallbackSvg: (
-            <div className="w-full h-full bg-gradient-to-br from-emerald-900/40 to-green-900/40 flex flex-col items-center justify-center p-6 text-center">
-              <MapPin className="w-10 h-10 text-emerald-400 mb-3" />
-              <span className="text-xs font-bold text-emerald-200">Route Scheduling & Dispatch</span>
-              <span className="text-[10px] text-emerald-400/80 mt-1.5 leading-relaxed">Vận hành xe khách liên tỉnh, định vị vị trí xe và phân chia lịch trực tài xế</span>
-            </div>
-          )
-        }
-      ]
-    }
+  // 🎯 BỘ PHÂN TÍCH VÀ TRÍCH XUẤT ĐỘNG: Hỗ trợ mọi số lượng & tên file bất kỳ
+  const parseMessageContent = (text: string) => {
+    // Regex quét toàn bộ liên kết hình ảnh và video
+    const mediaRegex = /(https?:\/\/[^\s"'<>\(\)]+\.(?:png|jpg|jpeg|gif|webp|bmp|svg|ico|mp4|webm|ogg|mov|m4v|avi|mkv)[^\s"'<>\(\)]*)/gi;
+    const urls: string[] = text.match(mediaRegex) || [];
+    
+    // Quét các đường link hành động triển khai thực tế
+    const generalUrlRegex = /(https?:\/\/(?:github\.com|quan-ly-truong-mam-non|socal-media|vercel|onrender\.com)[^\s"'<>\(\)]*)/gi;
+    const rawActionLinks: string[] = text.match(generalUrlRegex) || [];
+    
+    // Lọc bỏ link media ra khỏi link điều hướng hành động
+    const actionLinks: string[] = rawActionLinks.filter((link: string) => !urls.includes(link) && !link.includes('CV_PhamHongTruong.pdf'));
+
+    let cleanText = text;
+    
+    // 1. Dọn sạch các liên kết ảnh/video thô
+    urls.forEach((url: string) => {
+      const markdownRegex = new RegExp(`\\!?\\[[^\\]]*\\]\\(${escapeRegExp(url)}\\)`, 'gi');
+      cleanText = cleanText.replace(markdownRegex, '');
+      cleanText = cleanText.replace(new RegExp(escapeRegExp(url), 'g'), '');
+    });
+
+    // 2. Dọn sạch các liên kết điều hướng thô
+    actionLinks.forEach((link: string) => {
+      const markdownRegex = new RegExp(`\\[[^\\]]*\\]\\(${escapeRegExp(link)}\\)`, 'gi');
+      cleanText = cleanText.replace(markdownRegex, '');
+      cleanText = cleanText.replace(new RegExp(escapeRegExp(link), 'g'), '');
+    });
+
+    // Định dạng tinh chỉnh lại khoảng xuống dòng thừa
+    cleanText = cleanText.replace(/\n{3,}/g, '\n\n').trim();
+
+    return {
+      cleanText,
+      mediaUrls: Array.from(new Set(urls)),
+      actionLinks: Array.from(new Set(actionLinks))
+    };
   };
 
-  // Component Live Box nâng cấp: Trình chiếu mượt mà cả VIDEO và ẢNH, nút lướt và liên kết trực tiếp
-  const LiveBox: React.FC<{ projectId: string }> = ({ projectId }) => {
-    const project = PROJECTS_DATA[projectId];
-    if (!project || !project.media || project.media.length === 0) return null;
+  // 🎯 LIVE BOX ĐỘNG: Hiển thị KHÔNG GIỚI HẠN số lượng media
+  const DynamicMediaBox: React.FC<{ mediaUrls: string[]; actionLinks: string[] }> = ({ mediaUrls, actionLinks }) => {
+    if (mediaUrls.length === 0 && actionLinks.length === 0) return null;
 
-    const [activeIndex, setActiveIndex] = useState<number>(0);
-    const [mediaStates, setMediaStates] = useState<Record<number, 'success' | 'error'>>({});
-
-    const handleMediaLoad = (index: number) => {
-      setMediaStates(prev => ({ ...prev, [index]: 'success' }));
+    // Tính toán số cột dựa trên số lượng media
+    const getGridCols = (count: number) => {
+      if (count === 1) return 'grid-cols-1 max-w-md mx-auto';
+      if (count === 2) return 'grid-cols-1 sm:grid-cols-2';
+      if (count <= 4) return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2';
+      return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
     };
-
-    const handleMediaError = (index: number) => {
-      setMediaStates(prev => ({ ...prev, [index]: 'error' }));
-    };
-
-    const nextSlide = () => {
-      setActiveIndex((prev) => (prev + 1) % project.media.length);
-    };
-
-    const prevSlide = () => {
-      setActiveIndex((prev) => (prev - 1 + project.media.length) % project.media.length);
-    };
-
-    const currentMedia = project.media[activeIndex];
-    const mediaType = getMediaType(currentMedia.url);
-    const isError = mediaStates[activeIndex] === 'error';
 
     return (
-      <div className="my-4 border border-slate-800 bg-slate-950/80 rounded-2xl overflow-hidden shadow-xl transition-all max-w-lg w-full flex flex-col">
+      <div className="mt-4 border border-slate-800 bg-slate-950/90 rounded-2xl overflow-hidden shadow-xl transition-all w-full flex flex-col">
+        
         {/* Header Live Box */}
-        <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Demo: {project.name}</span>
-          </div>
-          <span className="text-[10px] text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded">
-            {activeIndex + 1} / {project.media.length}
-          </span>
-        </div>
-
-        {/* Khung trình chiếu Đa Phương Tiện (Ảnh hoặc Video) */}
-        <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden group border-b border-slate-900">
-          <button 
-            onClick={prevSlide}
-            className="absolute left-3 z-20 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          {isError ? (
-            currentMedia.fallbackSvg
-          ) : (
-            <>
-              {mediaType === 'video' ? (
-                <video 
-                  src={currentMedia.url}
-                  controls
-                  autoPlay={false}
-                  muted
-                  loop
-                  onLoadedData={() => handleMediaLoad(activeIndex)}
-                  onError={() => handleMediaError(activeIndex)}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <img 
-                  src={currentMedia.url} 
-                  alt={currentMedia.title}
-                  onLoad={() => handleMediaLoad(activeIndex)}
-                  onError={() => handleMediaError(activeIndex)}
-                  className="w-full h-full object-cover transition-all duration-300"
-                />
-              )}
-
-              <button 
-                onClick={() => {
-                  setLightboxMedia({ url: currentMedia.url, type: mediaType });
-                  setLightboxTitle(currentMedia.title);
-                }}
-                className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
-                title="Phóng to"
-              >
-                <Maximize2 size={14} />
-              </button>
-            </>
-          )}
-
-          <button 
-            onClick={nextSlide}
-            className="absolute right-3 z-20 p-2 rounded-full bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-
-        {/* Mô tả chi tiết */}
-        <div className="p-3.5 bg-slate-950/40 flex items-start gap-2.5 border-b border-slate-900/50">
-          <Info size={14} className="text-cyan-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-slate-300 font-medium leading-relaxed">
-            {currentMedia.title}
-          </p>
-        </div>
-
-        {/* CÁC NÚT KẾT NỐI LIÊN KẾT TRỰC TIẾP */}
-        <div className="p-3 bg-slate-900/40 flex flex-wrap gap-2 justify-end">
-          {project.githubBackendUrl && project.githubFrontendUrl ? (
-            <>
-              <a 
-                href={project.githubBackendUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-semibold transition-all"
-              >
-                <Code size={13} className="text-indigo-400" />
-                <span>Backend Git</span>
-              </a>
-              <a 
-                href={project.githubFrontendUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-semibold transition-all"
-              >
-                <Layers className="text-cyan-400" size={13} />
-                <span>Frontend Git</span>
-              </a>
-            </>
-          ) : (
-            <a 
-              href={project.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-semibold transition-all"
-            >
-              <GithubIcon size={13} className="text-slate-400" />
-              <span>GitHub Repository</span>
-            </a>
-          )}
-
-          {project.deployUrl && (
-            <a 
-              href={project.deployUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/10"
-            >
-              <ExternalLink size={13} />
-              <span>Chạy Bản Demo</span>
-            </a>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // Component hiển thị chân dung cá nhân của Trưởng
-  const UserPhotoBox: React.FC = () => {
-    const imageUrl = `${BACKEND_BASE}/public/user/avatar.png`;
-    const [imageState, setImageState] = useState<'success' | 'error'>('success');
-
-    return (
-      <div className="my-4 border border-slate-800 bg-slate-950/80 rounded-2xl overflow-hidden shadow-xl transition-all max-w-xs w-full flex flex-col">
-        <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Ảnh Chân Dung</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-        </div>
-
-        <div className="relative aspect-square w-full bg-slate-950 flex items-center justify-center overflow-hidden group">
-          {imageState === 'error' ? (
-            <div className="w-full h-full bg-gradient-to-br from-indigo-900/30 to-purple-900/30 flex flex-col items-center justify-center p-6 text-center">
-              <User className="w-16 h-16 text-indigo-400 mb-3" />
-              <span className="text-xs font-bold text-indigo-200">Phạm Hồng Trưởng</span>
-              <span className="text-[10px] text-indigo-400/80 mt-1 leading-relaxed">Fullstack Engineer</span>
+        {mediaUrls.length > 0 && (
+          <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Bộ sưu tập giao diện dự án</span>
             </div>
-          ) : (
-            <>
-              <img 
-                src={imageUrl} 
-                alt="Phạm Hồng Trưởng"
-                onError={() => setImageState('error')}
-                className="w-full h-full object-cover transition-all duration-300"
-              />
-              <button 
-                onClick={() => {
-                  setLightboxMedia({ url: imageUrl, type: 'image' });
-                  setLightboxTitle("Ảnh chân dung Phạm Hồng Trưởng");
-                }}
-                className="absolute top-2.5 right-2.5 p-2 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
-                title="Phóng to ảnh"
-              >
-                <Maximize2 size={14} />
-              </button>
-            </>
-          )}
-        </div>
+            <span className="text-[10px] text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded">
+              {mediaUrls.length} File
+            </span>
+          </div>
+        )}
+
+        {/* Lưới hiển thị đa phương tiện không giới hạn */}
+        {mediaUrls.length > 0 && (
+          <div className={`p-3 bg-slate-950 grid ${getGridCols(mediaUrls.length)} gap-3 border-b border-slate-900`}>
+            {mediaUrls.map((url, index) => {
+              const type = getMediaType(url);
+              return (
+                <div 
+                  key={index} 
+                  className="relative aspect-video rounded-xl bg-slate-900 border border-slate-800 overflow-hidden group flex items-center justify-center"
+                >
+                  {type === 'video' ? (
+                    <video 
+                      src={url}
+                      controls
+                      autoPlay={false}
+                      muted
+                      loop
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img 
+                      src={url} 
+                      alt="" 
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  )}
+
+                  {/* Nút phóng to Lightbox */}
+                  <button 
+                    onClick={() => setLightboxMedia({ url, type })}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
+                    title="Phóng to"
+                  >
+                    <Maximize2 size={13} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Khung nút bấm chuyển đổi link hành động */}
+        {actionLinks.length > 0 && (
+          <div className="p-2.5 bg-slate-900/40 flex flex-wrap gap-2 justify-end">
+            {actionLinks.map((link, index) => {
+              const isGithub = link.includes('github.com');
+              const isFrontendGit = link.includes('frontend');
+              const isBackendGit = link.includes('backend');
+
+              return (
+                <a 
+                  key={index}
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                    isGithub 
+                      ? 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700' 
+                      : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/30 shadow-md shadow-indigo-600/10'
+                  }`}
+                >
+                  {isGithub ? (
+                    <>
+                      <GithubIcon size={13} />
+                      <span>{isFrontendGit ? 'Frontend Git' : isBackendGit ? 'Backend Git' : 'Source Code'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink size={13} />
+                      <span>Chạy Bản Demo</span>
+                    </>
+                  )}
+                </a>
+              );
+            })}
+          </div>
+        )}
+
       </div>
     );
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-0 sm:p-4 font-sans antialiased overflow-hidden">
+      {/* Hiệu ứng mờ nghệ thuật background */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
@@ -689,39 +498,10 @@ export default function App() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
             {messages.map((msg) => {
               const hasDownloadLink = msg.content.includes(downloadCvUrl);
-              const lowerContent = msg.content.toLowerCase();
-
-              // CHỈ KÍCH HOẠT BOX KHI AI ĐANG TRẢ LỜI VÀ KHÔNG PHẢI LÀ LỜI CHÀO MỞ ĐẦU (id !== 1)
-              const showMediaBox = msg.role === 'assistant' && msg.id !== 1 && !msg.isError;
-
-              // GIẢI PHÁP QUÉT THÔNG MINH: Quét từ khóa tiếng Việt kết hợp tên tệp/thư mục hệ thống từ Backend
-              const isProject1 = showMediaBox && (
-                lowerContent.includes('project1') || 
-                lowerContent.includes('mầm non') || 
-                lowerContent.includes('mam non') ||
-                lowerContent.includes('kindergarten')
-              );
-
-              const isProject2 = showMediaBox && (
-                lowerContent.includes('project2') || 
-                lowerContent.includes('social') || 
-                lowerContent.includes('socal') || 
-                lowerContent.includes('mạng xã hội')
-              );
-
-              const isProject3 = showMediaBox && (
-                lowerContent.includes('project3') || 
-                lowerContent.includes('bus') || 
-                lowerContent.includes('vé xe') || 
-                lowerContent.includes('ticket')
-              );
               
-              const isSelfIntro = showMediaBox && (
-                lowerContent.includes('user/avatar') ||
-                lowerContent.includes('bạn là ai') || 
-                lowerContent.includes('giới thiệu') || 
-                lowerContent.includes('phạm hồng trưởng')
-              );
+              // KÍCH HOẠT QUÉT HÌNH ẢNH/VIDEO/LINK HÀNH ĐỘNG
+              const { cleanText, mediaUrls, actionLinks } = parseMessageContent(msg.content);
+              const showMediaSection = msg.role === 'assistant' && msg.id !== 1 && !msg.isError;
 
               return (
                 <div 
@@ -746,13 +526,14 @@ export default function App() {
                           ? 'bg-red-950/50 border border-red-900/40 text-red-200 rounded-tl-none'
                           : 'bg-slate-900/95 border border-slate-800 text-slate-200 rounded-tl-none shadow-sm'
                     }`}>
-                      {msg.content}
+                      
+                      {/* Text chữ sau khi được dọn sạch */}
+                      {cleanText}
 
-                      {/* Hiển thị LiveBox tương ứng nếu thỏa mãn điều kiện quét */}
-                      {isProject1 && <LiveBox projectId="project1" />}
-                      {isProject2 && <LiveBox projectId="project2" />}
-                      {isProject3 && <LiveBox projectId="project3" />}
-                      {isSelfIntro && !isProject1 && !isProject2 && !isProject3 && <UserPhotoBox />}
+                      {/* Render Live Box Gallery KHÔNG GIỚI HẠN số lượng media */}
+                      {showMediaSection && (mediaUrls.length > 0 || actionLinks.length > 0) && (
+                        <DynamicMediaBox mediaUrls={mediaUrls} actionLinks={actionLinks} />
+                      )}
 
                       {/* Nút tải tệp CV đính kèm */}
                       {msg.role === 'assistant' && hasDownloadLink && !msg.isError && (
@@ -855,7 +636,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* MODAL PHÓNG TO ĐA PHƯƠNG TIỆN (LIGHTBOX CHO CẢ ẢNH & VIDEO) */}
+      {/* MODAL LIGHTBOX PHÓNG TO */}
       {lightboxMedia && (
         <div 
           className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4 font-sans"
@@ -873,20 +654,16 @@ export default function App() {
               src={lightboxMedia.url} 
               controls 
               autoPlay 
-              className="max-w-full max-h-[80vh] rounded-lg shadow-2xl"
-              onClick={(e) => e.stopPropagation()} // Chặn tắt Lightbox khi click vào nút video
+              className="max-w-full max-h-[85vh] rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <img 
               src={lightboxMedia.url} 
-              alt={lightboxTitle} 
+              alt="" 
               className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
             />
           )}
-          
-          <p className="mt-4 text-sm font-semibold text-slate-300 tracking-wide text-center max-w-2xl bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
-            {lightboxTitle}
-          </p>
         </div>
       )}
 
