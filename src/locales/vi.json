@@ -1,0 +1,77 @@
+{
+  "app": {
+    "title": "Trợ lý Profile của Trưởng",
+    "online": "Đang trực tuyến (Thời gian thực)",
+    "powered_by": "Xây dựng bằng NestJS, Mongoose, Gemini"
+  },
+  "sidebar": {
+    "student_info": "VTC Academy Student | Fullstack Engineer",
+    "bio": "Mình là sinh viên Học viện Công nghệ VTC (VTC Academy), được đào tạo chuyên sâu về Fullstack Development. Mình đam mê xây dựng các sản phẩm Web/Mobile tối ưu hiện đại.",
+    "skills_title": "Hồ sơ kỹ năng",
+    "attachments_title": "Tài liệu đính kèm",
+    "cv_name": "CV_PhamHongTruong.pdf",
+    "cv_description": "Tải trực tiếp về máy",
+    "side_projects": "Dự án phụ tiêu biểu",
+    "golang_section": "Golang (Backend & DevOps)",
+    "winform_section": "Windows Application (C#)",
+    "contact_title": "Thông tin kết nối"
+  },
+  "chat": {
+    "placeholder": "Hỏi về dự án mầm non, Golang, Winform, mạng xã hội, bus ticket...",
+    "suggestions": {
+      "who_are_you": "Bạn là ai?",
+      "side_projects": "Bạn có dự án nhỏ hay dự án Golang, Winform nào không?",
+      "kindergarten": "Cho mình xem chi tiết dự án Mầm non",
+      "social_images": "Trình chiếu ảnh và video dự án Social Network"
+    },
+    "footer_note": "Hệ thống kết nối trực tiếp cơ sở dữ liệu MongoDB và phân tích CV thực tế của Phạm Hồng Trưởng thông qua NestJS & Gemini.",
+    "clear_confirm_title": "Xác nhận xóa lịch sử",
+    "clear_confirm_message": "Bạn có chắc chắn muốn xóa lịch sử trò chuyện hiện tại không? Hành động này sẽ dọn sạch màn hình để bạn hỏi cuộc trò chuyện mới.",
+    "cancel": "Hủy bỏ",
+    "confirm": "Xóa ngay",
+    "cors_error_title": "Mẹo xử lý kết nối (CORS):",
+    "cors_error_message": "Đảm bảo tệp main.ts ở Backend NestJS đã bật CORS:"
+  },
+  "projects": {
+    "kindergarten": {
+      "title": "Dự án: Quản lý trường Mầm non",
+      "role": "Vai trò",
+      "tech": "Công nghệ",
+      "desc": "Mô tả",
+      "demo": "Link Demo",
+      "source": "Mã nguồn",
+      "credentials": "Tài khoản dùng thử"
+    },
+    "social": {
+      "title": "Dự án: Social Network",
+      "role": "Vai trò",
+      "tech": "Công nghệ",
+      "desc": "Mô tả"
+    },
+    "bus": {
+      "title": "Dự án: Bus Ticket Management",
+      "role": "Vai trò",
+      "tech": "Công nghệ",
+      "desc": "Mô tả"
+    }
+  },
+  "errors": {
+    "connection": "Không thể kết nối với máy chủ Backend",
+    "outside_scope": "Xin lỗi, câu hỏi này nằm ngoài phạm vi của tôi. Tôi chỉ hỗ trợ thông tin về Phạm Hồng Trưởng (kỹ năng, dự án, học vấn).",
+    "busy": "Hệ thống đang bận. Tải CV của Trưởng tại:"
+  },
+  "buttons": {
+    "download_cv": "Tải xuống CV của Trưởng (PDF)",
+    "frontend_git": "Frontend Git",
+    "backend_git": "Backend Git",
+    "source_code": "Source Code",
+    "run_demo": "Chạy Bản Demo",
+    "clear_chat": "Xóa cuộc trò chuyện",
+    "send": "Gửi"
+  },
+  "media": {
+    "gallery_header": "Bộ sưu tập giao diện dự án",
+    "files_count": "File",
+    "zoom": "Phóng to"
+  }
+}

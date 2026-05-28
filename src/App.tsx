@@ -17,8 +17,20 @@ import {
   ExternalLink,
   Maximize2,
   Layers,
-  Code
+  Code,
+  Globe
 } from 'lucide-react';
+
+// Import i18n
+import viTranslations from './locales/vi.json';
+import enTranslations from './locales/en.json';
+
+type Language = 'vi' | 'en';
+
+const translations = {
+  vi: viTranslations,
+  en: enTranslations
+};
 
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = "" }) => (
   <svg 
@@ -46,24 +58,40 @@ interface Message {
   isError?: boolean;
 }
 
-const SUGGESTED_QUESTIONS: string[] = [
-  "Bạn là ai?",
-  "Bạn có dự án nhỏ hay dự án Golang, Winform nào không?",
-  "Cho mình xem chi tiết dự án Mầm non",
-  "Trình chiếu ảnh và video dự án Social Network"
-];
+// Cập nhật câu hỏi gợi ý theo ngôn ngữ
+const getSuggestedQuestions = (lang: Language): string[] => {
+  if (lang === 'en') {
+    return [
+      "Who are you?",
+      "Do you have any Golang or Winform projects?",
+      "Show me Kindergarten project details",
+      "Show images and videos of Social Network project"
+    ];
+  }
+  return [
+    "Bạn là ai?",
+    "Bạn có dự án nhỏ hay dự án Golang, Winform nào không?",
+    "Cho mình xem chi tiết dự án Mầm non",
+    "Trình chiếu ảnh và video dự án Social Network"
+  ];
+};
 
-// Hàm escape ký tự đặc biệt phục vụ việc xử lý Regex chính xác
+// Hàm escape ký tự đặc biệt
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export default function App() {
+  const [language, setLanguage] = useState<Language>('vi');
+  const t = translations[language];
+  
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: 1, 
       role: 'assistant', 
-      content: 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về các dự án: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video trực quan nhé!',
+      content: language === 'vi' 
+        ? 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về các dự án: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video trực quan nhé!'
+        : 'Hello! 👋 I am Pham Hong Truong\'s virtual assistant. I am ready to connect and analyze Truong\'s CV. You can ask me about detailed information on projects: Kindergarten, Social Network, Bus Ticket, or learn about exciting side projects like Golang, C# WinForms so I can show you images and videos!',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -71,13 +99,10 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [corsErrorOccurred, setCorsErrorOccurred] = useState<boolean>(false);
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
-  
-  // Trạng thái Lightbox phóng to đa phương tiện (Ảnh hoặc Video)
   const [lightboxMedia, setLightboxMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Cấu hình URL cơ sở kết nối Backend
   const BACKEND_BASE = 'https://profile-back-end.onrender.com';
   const downloadCvUrl = `${BACKEND_BASE}/public/CV_PhamHongTruong.pdf`;
   const backendUrl = `${BACKEND_BASE}/chat`;
@@ -89,6 +114,12 @@ export default function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  // Xử lý chuyển đổi ngôn ngữ
+  const handleLanguageChange = (newLang: Language) => {
+    setLanguage(newLang);
+    // Có thể thêm logic gửi lại tin nhắn welcome mới nếu cần
+  };
 
   const handleSendMessage = async (textToSend?: string) => {
     const text = textToSend || inputMessage.trim();
@@ -117,11 +148,11 @@ export default function App() {
       });
 
       if (!response.ok) {
-        throw new Error(`Lỗi kết nối HTTP! Trạng thái: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
       const data = await response.json();
-      const replyContent = data.reply || data.answer || "Không nhận được phản hồi phù hợp từ Backend.";
+      const replyContent = data.reply || data.answer || "No valid response from backend.";
 
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
@@ -131,7 +162,7 @@ export default function App() {
       }]);
 
     } catch (error: unknown) {
-      console.error("Lỗi gửi tin nhắn:", error);
+      console.error("Error sending message:", error);
       
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("Failed to fetch") || errorMessage.includes("NetworkError")) {
@@ -141,7 +172,7 @@ export default function App() {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: 'assistant',
-        content: `❌ Không thể kết nối với máy chủ Backend tại: ${backendUrl}.\n\nHãy đảm bảo máy chủ NestJS đã được triển khai hoạt động ổn định và được kích hoạt CORS (app.enableCors()).`,
+        content: `❌ ${t.errors.connection} tại: ${backendUrl}.\n\n${t.chat.cors_error_message}\n\`\`\`typescript\nconst app = await NestFactory.create(AppModule);\napp.enableCors();\nawait app.listen(3000);\n\`\`\``,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isError: true
       }]);
@@ -151,18 +182,21 @@ export default function App() {
   };
 
   const executeClearChat = () => {
+    const welcomeMessage = language === 'vi'
+      ? 'Lịch sử trò chuyện đã được xóa thành công. Tôi đã sẵn sàng nhận các câu hỏi mới từ bạn! ✨'
+      : 'Chat history has been cleared successfully. I am ready to receive new questions from you! ✨';
+    
     setMessages([
       { 
         id: 1, 
         role: 'assistant', 
-        content: 'Lịch sử trò chuyện đã được xóa thành công. Tôi đã sẵn sàng nhận các câu hỏi mới từ bạn! ✨',
+        content: welcomeMessage,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
     setShowClearConfirm(false);
   };
 
-  // Hàm phát hiện loại tệp đa phương tiện dựa trên định dạng mở rộng
   const getMediaType = (url: string): 'image' | 'video' => {
     const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.m4v'];
     const lowercaseUrl = url.toLowerCase();
@@ -170,36 +204,29 @@ export default function App() {
     return isVideo ? 'video' : 'image';
   };
 
-  // 🎯 BỘ PHÂN TÍCH VÀ TRÍCH XUẤT ĐỘNG: Hỗ trợ mọi số lượng & tên file bất kỳ
   const parseMessageContent = (text: string) => {
-    // Regex quét toàn bộ liên kết hình ảnh và video
     const mediaRegex = /(https?:\/\/[^\s"'<>\(\)]+\.(?:png|jpg|jpeg|gif|webp|bmp|svg|ico|mp4|webm|ogg|mov|m4v|avi|mkv)[^\s"'<>\(\)]*)/gi;
     const urls: string[] = text.match(mediaRegex) || [];
     
-    // Quét các đường link hành động triển khai thực tế
     const generalUrlRegex = /(https?:\/\/(?:github\.com|quan-ly-truong-mam-non|socal-media|vercel|onrender\.com)[^\s"'<>\(\)]*)/gi;
     const rawActionLinks: string[] = text.match(generalUrlRegex) || [];
     
-    // Lọc bỏ link media ra khỏi link điều hướng hành động
     const actionLinks: string[] = rawActionLinks.filter((link: string) => !urls.includes(link) && !link.includes('CV_PhamHongTruong.pdf'));
 
     let cleanText = text;
     
-    // 1. Dọn sạch các liên kết ảnh/video thô
     urls.forEach((url: string) => {
       const markdownRegex = new RegExp(`\\!?\\[[^\\]]*\\]\\(${escapeRegExp(url)}\\)`, 'gi');
       cleanText = cleanText.replace(markdownRegex, '');
       cleanText = cleanText.replace(new RegExp(escapeRegExp(url), 'g'), '');
     });
 
-    // 2. Dọn sạch các liên kết điều hướng thô
     actionLinks.forEach((link: string) => {
       const markdownRegex = new RegExp(`\\[[^\\]]*\\]\\(${escapeRegExp(link)}\\)`, 'gi');
       cleanText = cleanText.replace(markdownRegex, '');
       cleanText = cleanText.replace(new RegExp(escapeRegExp(link), 'g'), '');
     });
 
-    // Định dạng tinh chỉnh lại khoảng xuống dòng thừa
     cleanText = cleanText.replace(/\n{3,}/g, '\n\n').trim();
 
     return {
@@ -209,11 +236,9 @@ export default function App() {
     };
   };
 
-  // 🎯 LIVE BOX ĐỘNG: Hiển thị KHÔNG GIỚI HẠN số lượng media
   const DynamicMediaBox: React.FC<{ mediaUrls: string[]; actionLinks: string[] }> = ({ mediaUrls, actionLinks }) => {
     if (mediaUrls.length === 0 && actionLinks.length === 0) return null;
 
-    // Tính toán số cột dựa trên số lượng media
     const getGridCols = (count: number) => {
       if (count === 1) return 'grid-cols-1 max-w-md mx-auto';
       if (count === 2) return 'grid-cols-1 sm:grid-cols-2';
@@ -224,20 +249,20 @@ export default function App() {
     return (
       <div className="mt-4 border border-slate-800 bg-slate-950/90 rounded-2xl overflow-hidden shadow-xl transition-all w-full flex flex-col">
         
-        {/* Header Live Box */}
         {mediaUrls.length > 0 && (
           <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Bộ sưu tập giao diện dự án</span>
+              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                {t.media.gallery_header}
+              </span>
             </div>
             <span className="text-[10px] text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded">
-              {mediaUrls.length} File
+              {mediaUrls.length} {t.media.files_count}
             </span>
           </div>
         )}
 
-        {/* Lưới hiển thị đa phương tiện không giới hạn */}
         {mediaUrls.length > 0 && (
           <div className={`p-3 bg-slate-950 grid ${getGridCols(mediaUrls.length)} gap-3 border-b border-slate-900`}>
             {mediaUrls.map((url, index) => {
@@ -262,16 +287,16 @@ export default function App() {
                       alt="" 
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
+                        console.error(`Failed to load image: ${url}`);
                         (e.target as HTMLElement).style.display = 'none';
                       }}
                     />
                   )}
 
-                  {/* Nút phóng to Lightbox */}
                   <button 
                     onClick={() => setLightboxMedia({ url, type })}
                     className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
-                    title="Phóng to"
+                    title={t.media.zoom}
                   >
                     <Maximize2 size={13} />
                   </button>
@@ -281,13 +306,17 @@ export default function App() {
           </div>
         )}
 
-        {/* Khung nút bấm chuyển đổi link hành động */}
         {actionLinks.length > 0 && (
           <div className="p-2.5 bg-slate-900/40 flex flex-wrap gap-2 justify-end">
             {actionLinks.map((link, index) => {
               const isGithub = link.includes('github.com');
               const isFrontendGit = link.includes('frontend');
               const isBackendGit = link.includes('backend');
+
+              let buttonText = t.buttons.source_code;
+              if (isFrontendGit) buttonText = t.buttons.frontend_git;
+              if (isBackendGit) buttonText = t.buttons.backend_git;
+              if (!isGithub) buttonText = t.buttons.run_demo;
 
               return (
                 <a 
@@ -304,12 +333,12 @@ export default function App() {
                   {isGithub ? (
                     <>
                       <GithubIcon size={13} />
-                      <span>{isFrontendGit ? 'Frontend Git' : isBackendGit ? 'Backend Git' : 'Source Code'}</span>
+                      <span>{buttonText}</span>
                     </>
                   ) : (
                     <>
                       <ExternalLink size={13} />
-                      <span>Chạy Bản Demo</span>
+                      <span>{buttonText}</span>
                     </>
                   )}
                 </a>
@@ -322,16 +351,16 @@ export default function App() {
     );
   };
 
+  const suggestedQuestions = getSuggestedQuestions(language);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-0 sm:p-4 font-sans antialiased overflow-hidden">
-      {/* Hiệu ứng mờ nghệ thuật background */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-      {/* Khung Chatbox chính */}
       <div className="relative w-full max-w-6xl h-screen sm:h-[780px] bg-slate-900/40 backdrop-blur-xl sm:rounded-2xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col md:flex-row">
         
-        {/* Sidebar bên trái */}
+        {/* Sidebar */}
         <div className="w-full md:w-[350px] bg-slate-950/80 border-b md:border-b-0 md:border-r border-slate-800 p-6 flex flex-col justify-between hidden md:flex overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           <div className="space-y-6">
             <div className="space-y-3">
@@ -343,16 +372,16 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-200">Phạm Hồng Trưởng</h3>
-                  <p className="text-[11px] text-slate-400 font-medium tracking-wide">VTC Academy Student | Fullstack Engineer</p>
+                  <p className="text-[11px] text-slate-400 font-medium tracking-wide">{t.sidebar.student_info}</p>
                 </div>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/40 p-3 rounded-xl border border-slate-800">
-                Mình là sinh viên Học viện Công nghệ VTC (VTC Academy), được đào tạo chuyên sâu về <strong>Fullstack Development</strong>. Mình đam mê xây dựng các sản phẩm Web/Mobile tối ưu hiện đại.
+                {t.sidebar.bio}
               </p>
             </div>
 
             <div className="space-y-2.5">
-              <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase block">Hồ sơ kỹ năng</span>
+              <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase block">{t.sidebar.skills_title}</span>
               <div className="flex flex-wrap gap-1.5">
                 {['NestJS', 'Laravel', 'React', 'React Native', 'Flutter', 'MySQL', 'MongoDB', 'Docker', 'Git'].map((skill, index) => (
                   <span key={index} className="bg-slate-900 border border-slate-800 text-slate-300 text-[10px] px-2.5 py-1 rounded-md font-medium">
@@ -362,9 +391,8 @@ export default function App() {
               </div>
             </div>
 
-            {/* Tài liệu đính kèm */}
             <div className="space-y-2">
-              <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Tài liệu đính kèm</span>
+              <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">{t.sidebar.attachments_title}</span>
               <a 
                 href={downloadCvUrl} 
                 target="_blank" 
@@ -376,20 +404,19 @@ export default function App() {
                     <FileText size={16} />
                   </div>
                   <div className="text-left">
-                    <span className="text-xs font-semibold block text-slate-200">CV_PhamHongTruong.pdf</span>
-                    <span className="text-[10px] text-slate-400 block">Tải trực tiếp về máy</span>
+                    <span className="text-xs font-semibold block text-slate-200">{t.sidebar.cv_name}</span>
+                    <span className="text-[10px] text-slate-400 block">{t.sidebar.cv_description}</span>
                   </div>
                 </div>
                 <Download size={14} className="text-cyan-400 group-hover:translate-y-0.5 transition-transform" />
               </a>
             </div>
 
-            {/* Các dự án phụ (Golang & Winform) */}
             <div className="space-y-2.5 bg-slate-900/20 p-4 rounded-xl border border-slate-800">
-              <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase block">Dự án phụ tiêu biểu</span>
+              <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase block">{t.sidebar.side_projects}</span>
               <div className="space-y-2 text-xs">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-semibold text-indigo-400 block">⚡ Golang (Backend & DevOps)</span>
+                  <span className="text-[10px] font-semibold text-indigo-400 block">{t.sidebar.golang_section}</span>
                   <div className="flex flex-col gap-1 pl-2 border-l border-indigo-500/30">
                     <a href="https://github.com/Hongtruongbvn/back-devop" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-indigo-300 flex items-center gap-1">
                       <Code size={12} /> DevOps Go <ExternalLink size={10} />
@@ -403,7 +430,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-1 pt-1">
-                  <span className="text-[10px] font-semibold text-emerald-400 block">⚡ Windows Application (C#)</span>
+                  <span className="text-[10px] font-semibold text-emerald-400 block">{t.sidebar.winform_section}</span>
                   <div className="flex flex-col gap-1 pl-2 border-l border-emerald-500/30">
                     <a href="https://github.com/truongbvnedu/Child_MNG" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-emerald-300 flex items-center gap-1">
                       <Layers size={12} /> Child Management <ExternalLink size={10} />
@@ -413,9 +440,8 @@ export default function App() {
               </div>
             </div>
 
-            {/* Thông tin liên hệ */}
             <div className="space-y-3 bg-slate-900/30 p-4 rounded-xl border border-slate-800">
-              <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase block">Thông tin kết nối</span>
+              <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase block">{t.sidebar.contact_title}</span>
               <div className="space-y-2.5 text-xs text-slate-300">
                 <div className="flex items-center gap-2.5">
                   <Phone size={14} className="text-slate-500" />
@@ -447,14 +473,13 @@ export default function App() {
 
           <div className="text-[10px] text-slate-500 flex items-center gap-1.5 pt-4 border-t border-slate-900 font-sans">
             <Info size={12} />
-            <span>Xây dựng bằng NestJS, Mongoose, Gemini</span>
+            <span>{t.app.powered_by}</span>
           </div>
         </div>
 
-        {/* Khung Chat chính */}
+        {/* Chat chính */}
         <div className="flex-1 flex flex-col h-full bg-slate-950/20 relative">
           
-          {/* Header */}
           <div className="bg-slate-950/80 backdrop-blur border-b border-slate-800 px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -470,7 +495,7 @@ export default function App() {
 
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="font-bold text-slate-100 text-sm">Trợ lý Profile của Trưởng</h1>
+                  <h1 className="font-bold text-slate-100 text-sm">{t.app.title}</h1>
                   <span className="bg-indigo-900/40 border border-indigo-700/50 text-[10px] text-indigo-300 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                     <Sparkles size={10} />
                     Gemini Active
@@ -478,28 +503,37 @@ export default function App() {
                 </div>
                 <p className="text-xs text-emerald-400/80 flex items-center gap-1 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  Đang trực tuyến (Thời gian thực)
+                  {t.app.online}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              {/* Nút chuyển đổi ngôn ngữ */}
+              <button
+                onClick={() => handleLanguageChange(language === 'vi' ? 'en' : 'vi')}
+                className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-indigo-400 transition-all flex items-center gap-1.5"
+                title={language === 'vi' ? 'English' : 'Tiếng Việt'}
+              >
+                <Globe size={16} />
+                <span className="text-xs font-medium hidden sm:inline">
+                  {language === 'vi' ? 'EN' : 'VI'}
+                </span>
+              </button>
+              
               <button 
                 onClick={() => setShowClearConfirm(true)}
                 className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-red-400 transition-all"
-                title="Xóa cuộc trò chuyện"
+                title={t.buttons.clear_chat}
               >
                 <Trash2 size={18} />
               </button>
             </div>
           </div>
 
-          {/* Danh sách tin nhắn */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
             {messages.map((msg) => {
               const hasDownloadLink = msg.content.includes(downloadCvUrl);
-              
-              // KÍCH HOẠT QUÉT HÌNH ẢNH/VIDEO/LINK HÀNH ĐỘNG
               const { cleanText, mediaUrls, actionLinks } = parseMessageContent(msg.content);
               const showMediaSection = msg.role === 'assistant' && msg.id !== 1 && !msg.isError;
 
@@ -527,15 +561,12 @@ export default function App() {
                           : 'bg-slate-900/95 border border-slate-800 text-slate-200 rounded-tl-none shadow-sm'
                     }`}>
                       
-                      {/* Text chữ sau khi được dọn sạch */}
                       {cleanText}
 
-                      {/* Render Live Box Gallery KHÔNG GIỚI HẠN số lượng media */}
                       {showMediaSection && (mediaUrls.length > 0 || actionLinks.length > 0) && (
                         <DynamicMediaBox mediaUrls={mediaUrls} actionLinks={actionLinks} />
                       )}
 
-                      {/* Nút tải tệp CV đính kèm */}
                       {msg.role === 'assistant' && hasDownloadLink && !msg.isError && (
                         <div className="mt-3.5 pt-3.5 border-t border-slate-800/80">
                           <a 
@@ -545,7 +576,7 @@ export default function App() {
                             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/10 transition-all border border-indigo-500/30 group animate-pulse"
                           >
                             <FileText size={14} />
-                            <span>Tải xuống CV của Trưởng (PDF)</span>
+                            <span>{t.buttons.download_cv}</span>
                             <Download size={14} className="group-hover:translate-y-0.5 transition-transform" />
                           </a>
                         </div>
@@ -578,8 +609,8 @@ export default function App() {
               <div className="bg-amber-950/40 border border-amber-900/40 p-4 rounded-xl flex items-start gap-3 max-w-[90%] mx-auto mt-2 font-sans">
                 <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={18} />
                 <div className="text-xs text-amber-200 leading-relaxed">
-                  <strong className="block text-amber-300 font-semibold mb-1">Mẹo xử lý kết nối (CORS):</strong>
-                  Đảm bảo tệp <code className="bg-slate-900 px-1 py-0.5 rounded text-indigo-400">main.ts</code> ở Backend NestJS đã bật CORS:
+                  <strong className="block text-amber-300 font-semibold mb-1">{t.chat.cors_error_title}</strong>
+                  {t.chat.cors_error_message}
                   <pre className="bg-slate-950 p-2 rounded border border-slate-800 text-[10px] mt-2 text-slate-300 font-mono">
                     {`const app = await NestFactory.create(AppModule);\napp.enableCors();\nawait app.listen(3000);`}
                   </pre>
@@ -590,10 +621,9 @@ export default function App() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Gợi ý câu hỏi nhanh */}
           <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-900 font-sans">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {SUGGESTED_QUESTIONS.map((q, idx) => (
+              {suggestedQuestions.map((q, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(q)}
@@ -607,7 +637,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Form gửi câu hỏi */}
           <div className="p-4 bg-slate-950 border-t border-slate-900 font-sans">
             <form 
               onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} 
@@ -617,7 +646,7 @@ export default function App() {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Hỏi về dự án mầm non, Golang, Winform, mạng xã hội, bus ticket..."
+                placeholder={t.chat.placeholder}
                 className="flex-1 bg-transparent border-transparent px-3 py-2 text-sm text-slate-200 outline-none placeholder:text-slate-500"
                 disabled={isLoading}
               />
@@ -630,13 +659,12 @@ export default function App() {
               </button>
             </form>
             <p className="text-[10px] text-slate-500 text-center mt-2.5">
-              Hệ thống kết nối trực tiếp cơ sở dữ liệu MongoDB và phân tích CV thực tế của Phạm Hồng Trưởng thông qua NestJS & Gemini.
+              {t.chat.footer_note}
             </p>
           </div>
         </div>
       </div>
 
-      {/* MODAL LIGHTBOX PHÓNG TO */}
       {lightboxMedia && (
         <div 
           className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4 font-sans"
@@ -667,14 +695,13 @@ export default function App() {
         </div>
       )}
 
-      {/* Modal xác nhận xóa lịch sử */}
       {showClearConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 font-sans">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex justify-between items-start">
               <h3 className="font-bold text-slate-200 flex items-center gap-2">
                 <Trash2 className="text-red-400" size={20} />
-                Xác nhận xóa lịch sử
+                {t.chat.clear_confirm_title}
               </h3>
               <button 
                 onClick={() => setShowClearConfirm(false)}
@@ -684,20 +711,20 @@ export default function App() {
               </button>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Bạn có chắc chắn muốn xóa lịch sử trò chuyện hiện tại không? Hành động này sẽ dọn sạch màn hình để bạn hỏi cuộc trò chuyện mới.
+              {t.chat.clear_confirm_message}
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <button 
                 onClick={() => setShowClearConfirm(false)}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all"
               >
-                Hủy bỏ
+                {t.chat.cancel}
               </button>
               <button 
                 onClick={executeClearChat}
                 className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold transition-all"
               >
-                Xóa ngay
+                {t.chat.confirm}
               </button>
             </div>
           </div>

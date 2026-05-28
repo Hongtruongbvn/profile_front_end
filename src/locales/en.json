@@ -1,0 +1,77 @@
+{
+  "app": {
+    "title": "Truong's Profile Assistant",
+    "online": "Online (Real-time)",
+    "powered_by": "Powered by NestJS, Mongoose, Gemini"
+  },
+  "sidebar": {
+    "student_info": "VTC Academy Student | Fullstack Engineer",
+    "bio": "I am a student at VTC Academy, specializing in Fullstack Development. I am passionate about building modern, optimized Web/Mobile products.",
+    "skills_title": "Skills Profile",
+    "attachments_title": "Attachments",
+    "cv_name": "CV_PhamHongTruong.pdf",
+    "cv_description": "Download directly",
+    "side_projects": "Featured Side Projects",
+    "golang_section": "Golang (Backend & DevOps)",
+    "winform_section": "Windows Application (C#)",
+    "contact_title": "Contact Information"
+  },
+  "chat": {
+    "placeholder": "Ask about kindergarten, Golang, Winform, social network, bus ticket projects...",
+    "suggestions": {
+      "who_are_you": "Who are you?",
+      "side_projects": "Do you have any Golang or Winform projects?",
+      "kindergarten": "Show me Kindergarten project details",
+      "social_images": "Show images and videos of Social Network project"
+    },
+    "footer_note": "The system directly connects to MongoDB database and analyzes Pham Hong Truong's real CV through NestJS & Gemini.",
+    "clear_confirm_title": "Confirm Clear History",
+    "clear_confirm_message": "Are you sure you want to clear the chat history? This will reset the conversation.",
+    "cancel": "Cancel",
+    "confirm": "Clear",
+    "cors_error_title": "CORS Connection Tip:",
+    "cors_error_message": "Make sure CORS is enabled in your NestJS backend main.ts file:"
+  },
+  "projects": {
+    "kindergarten": {
+      "title": "Project: Kindergarten Management",
+      "role": "Role",
+      "tech": "Technology",
+      "desc": "Description",
+      "demo": "Demo Link",
+      "source": "Source Code",
+      "credentials": "Test Credentials"
+    },
+    "social": {
+      "title": "Project: Social Network",
+      "role": "Role",
+      "tech": "Technology",
+      "desc": "Description"
+    },
+    "bus": {
+      "title": "Project: Bus Ticket Management",
+      "role": "Role",
+      "tech": "Technology",
+      "desc": "Description"
+    }
+  },
+  "errors": {
+    "connection": "Cannot connect to Backend server",
+    "outside_scope": "Sorry, this question is outside my scope. I only provide information about Pham Hong Truong (skills, projects, education).",
+    "busy": "The system is busy. Download Truong's CV at:"
+  },
+  "buttons": {
+    "download_cv": "Download Truong's CV (PDF)",
+    "frontend_git": "Frontend Git",
+    "backend_git": "Backend Git",
+    "source_code": "Source Code",
+    "run_demo": "Run Demo",
+    "clear_chat": "Clear chat",
+    "send": "Send"
+  },
+  "media": {
+    "gallery_header": "Project Interface Gallery",
+    "files_count": "Files",
+    "zoom": "Zoom"
+  }
+}
