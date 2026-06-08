@@ -103,7 +103,7 @@ export default function App() {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const BACKEND_BASE = 'https://profile-back-end.onrender.com';
+  const BACKEND_BASE = 'https://profile-back.truongbvn.online';
   const downloadCvUrl = `${BACKEND_BASE}/public/CV_PhamHongTruong.pdf`;
   const backendUrl = `${BACKEND_BASE}/chat`;
 
