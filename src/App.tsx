@@ -103,7 +103,7 @@ export default function App() {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const BACKEND_BASE = 'https://profile-back.truongbvn.online';
+  const BACKEND_BASE = 'https://profile-back-end.onrender.com';
   const downloadCvUrl = `${BACKEND_BASE}/public/CV_PhamHongTruong.pdf`;
   const backendUrl = `${BACKEND_BASE}/chat`;
 
@@ -169,10 +169,13 @@ export default function App() {
         setCorsErrorOccurred(true);
       }
 
+      // FIXED: Properly escape template literal with backticks in error message
+      const errorContent = `❌ ${t.errors.connection} tại: ${backendUrl}.\n\n${t.chat.cors_error_message}\n\`\`\`typescript\nconst app = await NestFactory.create(AppModule);\napp.enableCors();\nawait app.listen(3000);\n\`\`\``;
+
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: 'assistant',
-        content: `❌ ${t.errors.connection} tại: ${backendUrl}.\n\n${t.chat.cors_error_message}\n\`\`\`typescript\nconst app = await NestFactory.create(AppModule);\napp.enableCors();\nawait app.listen(3000);\n\`\`\``,
+        content: errorContent,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isError: true
       }]);
