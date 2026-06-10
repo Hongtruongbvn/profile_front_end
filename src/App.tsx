@@ -21,7 +21,6 @@ import {
   Globe
 } from 'lucide-react';
 
-// Import i18n
 import viTranslations from './locales/vi.json';
 import enTranslations from './locales/en.json';
 
@@ -58,7 +57,6 @@ interface Message {
   isError?: boolean;
 }
 
-// Cập nhật câu hỏi gợi ý theo ngôn ngữ
 const getSuggestedQuestions = (lang: Language): string[] => {
   if (lang === 'en') {
     return [
@@ -76,10 +74,17 @@ const getSuggestedQuestions = (lang: Language): string[] => {
   ];
 };
 
-// Hàm escape ký tự đặc biệt
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// Welcome messages theo ngôn ngữ
+const getWelcomeMessage = (lang: Language): string => {
+  if (lang === 'en') {
+    return 'Hello! 👋 I am Pham Hong Truong\'s virtual assistant. I am ready to connect and analyze Truong\'s CV. You can ask me about detailed information on projects: Kindergarten, Social Network, Bus Ticket, or learn about exciting side projects like Golang, C# WinForms so I can show you images and videos!';
+  }
+  return 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về các dự án: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video trực quan nhé!';
+};
 
 export default function App() {
   const [language, setLanguage] = useState<Language>('vi');
@@ -89,9 +94,7 @@ export default function App() {
     { 
       id: 1, 
       role: 'assistant', 
-      content: language === 'vi' 
-        ? 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về các dự án: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video trực quan nhé!'
-        : 'Hello! 👋 I am Pham Hong Truong\'s virtual assistant. I am ready to connect and analyze Truong\'s CV. You can ask me about detailed information on projects: Kindergarten, Social Network, Bus Ticket, or learn about exciting side projects like Golang, C# WinForms so I can show you images and videos!',
+      content: getWelcomeMessage('vi'),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -115,10 +118,21 @@ export default function App() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // Xử lý chuyển đổi ngôn ngữ
+  // Xử lý chuyển đổi ngôn ngữ - cập nhật cả welcome message
   const handleLanguageChange = (newLang: Language) => {
     setLanguage(newLang);
-    // Có thể thêm logic gửi lại tin nhắn welcome mới nếu cần
+    // Cập nhật tin nhắn đầu tiên (welcome message) theo ngôn ngữ mới
+    setMessages(prev => {
+      const newMessages = [...prev];
+      if (newMessages[0] && newMessages[0].id === 1 && newMessages[0].role === 'assistant') {
+        newMessages[0] = {
+          ...newMessages[0],
+          content: getWelcomeMessage(newLang),
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+      }
+      return newMessages;
+    });
   };
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -169,7 +183,6 @@ export default function App() {
         setCorsErrorOccurred(true);
       }
 
-      // FIXED: Properly escape template literal with backticks in error message
       const errorContent = `❌ ${t.errors.connection} tại: ${backendUrl}.\n\n${t.chat.cors_error_message}\n\`\`\`typescript\nconst app = await NestFactory.create(AppModule);\napp.enableCors();\nawait app.listen(3000);\n\`\`\``;
 
       setMessages(prev => [...prev, {
@@ -185,15 +198,11 @@ export default function App() {
   };
 
   const executeClearChat = () => {
-    const welcomeMessage = language === 'vi'
-      ? 'Lịch sử trò chuyện đã được xóa thành công. Tôi đã sẵn sàng nhận các câu hỏi mới từ bạn! ✨'
-      : 'Chat history has been cleared successfully. I am ready to receive new questions from you! ✨';
-    
     setMessages([
       { 
         id: 1, 
         role: 'assistant', 
-        content: welcomeMessage,
+        content: getWelcomeMessage(language),
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
@@ -512,7 +521,6 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Nút chuyển đổi ngôn ngữ */}
               <button
                 onClick={() => handleLanguageChange(language === 'vi' ? 'en' : 'vi')}
                 className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-indigo-400 transition-all flex items-center gap-1.5"
@@ -735,4 +743,4 @@ export default function App() {
       )}
     </div>
   );
-}
+} 
