@@ -13,14 +13,11 @@ import {
   FileText,
   Download,
   Phone,
-  MapPin,
   ExternalLink,
   Maximize2,
   Layers,
   Code,
   Globe,
-  Calendar,
-  Target,
   Award,
   Briefcase,
   GraduationCap,
@@ -94,42 +91,6 @@ const getWelcomeMessage = (lang: Language): string => {
   }
   return 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về các dự án: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video trực quan nhé!';
   }
-
-
-// Typing animation hook
-const useTypingAnimation = (text: string, isActive: boolean, speed: number = 20) => {
-  const [displayText, setDisplayText] = useState('');
-  const [isComplete, setIsComplete] = useState(false);
-  const indexRef = useRef(0);
-
-  useEffect(() => {
-    if (!isActive) {
-      setDisplayText(text);
-      setIsComplete(true);
-      return;
-    }
-
-    if (!text) return;
-
-    setDisplayText('');
-    setIsComplete(false);
-    indexRef.current = 0;
-
-    const interval = setInterval(() => {
-      if (indexRef.current < text.length) {
-        setDisplayText(prev => prev + text[indexRef.current]);
-        indexRef.current++;
-      } else {
-        clearInterval(interval);
-        setIsComplete(true);
-      }
-    }, speed);
-
-    return () => clearInterval(interval);
-  }, [text, isActive, speed]);
-
-  return { displayText, isComplete };
-};
 
 export default function App() {
   const [language, setLanguage] = useState<Language>('vi');
