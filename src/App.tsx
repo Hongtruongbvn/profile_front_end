@@ -438,30 +438,29 @@ export default function App() {
       github: "https://github.com/Hongtruongbvn/bus_ticket-.git"
     },
     {
-      id: 2,
-      name: "Social Network",
-      nameVi: "Social Network - Mạng xã hội đa nền tảng",
-      period: "05/2025 - 10/2025",
-      role: "Team Leader",
-      roleVi: "Team Leader",
-      architecture: "Microservices",
-      description: "Ứng dụng mạng xã hội tương tác thế hệ mới cho phép người dùng chia sẻ các hoạt động thường ngày, giao lưu trực tuyến và xây dựng các bang hội, nhóm cộng đồng có cùng chung sở thích. Dự án là sự kết hợp các tính năng tương tác nổi bật của Facebook và Discord.",
-      descriptionEn: "Next-generation interactive social media application allowing users to share daily activities, interact online, and build guilds and community groups with shared interests. The project combines prominent interactive features of Facebook and Discord.",
-      features: [
-        "Thiết kế bảng tin động để đăng tải trạng thái, chia sẻ hình ảnh và tương tác",
-        "Phát triển các phòng trò chuyện nhóm đa kênh hỗ trợ Voice Chat và nhắn tin realtime",
-        "Triển khai hệ thống phân quyền vai trò chặt chẽ trong các bang hội cộng đồng"
-      ],
-      featuresEn: [
-        "Dynamic newsfeed design for posting status, sharing images and interactions",
-        "Multi-channel group chat rooms with Voice Chat and real-time messaging",
-        "Strict role-based permission system within community guilds"
-      ],
-      tech: ["NestJS", "MongoDB", "React", "React Native", "WebSocket"],
-      backendGit: "https://github.com/Hongtruongbvn/socal-media-backend",
-      frontendGit: "https://github.com/Hongtruongbvn/socal-media-frontend",
-      backendApi: "https://socal-media-backend-qh5r.onrender.com/api",
-      frontendDemo: "https://socal-media-frontend.vercel.app"
+        id: 2,
+  name: "Social Network",
+  nameVi: "Social Network - Mạng xã hội đa nền tảng",
+  period: "05/2025 - 10/2025",
+  role: "Team Leader",
+  roleVi: "Team Leader",
+  architecture: "Microservices",
+  description: "Ứng dụng mạng xã hội tương tác thế hệ mới cho phép người dùng chia sẻ các hoạt động thường ngày, giao lưu trực tuyến và xây dựng các bang hội, nhóm cộng đồng có cùng chung sở thích. Dự án là sự kết hợp các tính năng tương tác nổi bật của Facebook và Discord.",
+  descriptionEn: "Next-generation interactive social media application allowing users to share daily activities, interact online, and build guilds and community groups with shared interests. The project combines prominent interactive features of Facebook and Discord.",
+  features: [
+    "Thiết kế bảng tin động để đăng tải trạng thái, chia sẻ hình ảnh và tương tác",
+    "Phát triển các phòng trò chuyện nhóm đa kênh hỗ trợ Voice Chat và nhắn tin realtime",
+    "Triển khai hệ thống phân quyền vai trò chặt chẽ trong các bang hội cộng đồng"
+  ],
+  featuresEn: [
+    "Dynamic newsfeed design for posting status, sharing images and interactions",
+    "Multi-channel group chat rooms with Voice Chat and real-time messaging",
+    "Strict role-based permission system within community guilds"
+  ],
+  tech: ["NestJS", "MongoDB", "React", "React Native", "WebSocket"],
+  backendGit: "https://github.com/Hongtruongbvn/socal-media-backend",
+  frontendGit: "https://github.com/Hongtruongbvn/socal-media-frontend",
+  frontendDemo: "https://project1.truongbvn.online/"  // Chỉ còn frontend demo
     },
     {
       id: 3,
