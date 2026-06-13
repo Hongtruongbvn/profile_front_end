@@ -84,13 +84,17 @@ function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Welcome messages theo ngôn ngữ
+// Function to fix old URLs
+const fixImageUrl = (url: string): string => {
+  return url.replace(/profile-back-end\.onrender\.com/g, 'profile-back.truongbvn.online');
+};
+
 const getWelcomeMessage = (lang: Language): string => {
   if (lang === 'en') {
     return 'Hello! 👋 I am Pham Hong Truong\'s virtual assistant. I am ready to connect and analyze Truong\'s CV. You can ask me about detailed information on projects: Kindergarten, Social Network, Bus Ticket, or learn about exciting side projects like Golang, C# WinForms so I can show you images and videos!';
   }
   return 'Xin chào! 👋 Tôi là trợ lý ảo của Phạm Hồng Trưởng. Tôi đã sẵn sàng kết nối và phân tích toàn bộ CV của anh Trưởng. Bạn có thể hỏi tớ thông tin chi tiết về các dự án: Mầm non, Social Network, Bus Ticket hoặc tìm hiểu về các dự án phụ hấp dẫn như Golang, C# WinForms để tôi trình chiếu hình ảnh và video trực quan nhé!';
-  }
+}
 
 export default function App() {
   const [language, setLanguage] = useState<Language>('vi');
@@ -127,7 +131,6 @@ export default function App() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // Handle language change
   const handleLanguageChange = (newLang: Language) => {
     setLanguage(newLang);
     setMessages(prev => {
@@ -177,11 +180,13 @@ export default function App() {
       }
 
       const data = await response.json();
-      const replyContent = data.reply || data.answer || "No valid response from backend.";
+      let replyContent = data.reply || data.answer || "No valid response from backend.";
+      
+      // Fix any old URLs in the response
+      replyContent = fixImageUrl(replyContent);
 
       const assistantMsgId = Date.now() + 1;
       
-      // Add message with typing animation
       setMessages(prev => [...prev, {
         id: assistantMsgId,
         role: 'assistant',
@@ -193,7 +198,6 @@ export default function App() {
       
       setTypingMessageId(assistantMsgId);
       
-      // Start typing animation
       let index = 0;
       const interval = setInterval(() => {
         setMessages(prev => {
@@ -265,10 +269,14 @@ export default function App() {
 
   const parseMessageContent = (text: string) => {
     const mediaRegex = /(https?:\/\/[^\s"'<>\(\)]+\.(?:png|jpg|jpeg|gif|webp|bmp|svg|ico|mp4|webm|ogg|mov|m4v|avi|mkv)[^\s"'<>\(\)]*)/gi;
-    const urls: string[] = text.match(mediaRegex) || [];
+    let urls: string[] = text.match(mediaRegex) || [];
+    
+    // Fix URLs before processing
+    urls = urls.map(url => fixImageUrl(url));
     
     const generalUrlRegex = /(https?:\/\/(?:github\.com|quan-ly-truong-mam-non|socal-media|vercel|onrender\.com)[^\s"'<>\(\)]*)/gi;
-    const rawActionLinks: string[] = text.match(generalUrlRegex) || [];
+    let rawActionLinks: string[] = text.match(generalUrlRegex) || [];
+    rawActionLinks = rawActionLinks.map(link => fixImageUrl(link));
     
     const actionLinks: string[] = rawActionLinks.filter((link: string) => !urls.includes(link) && !link.includes('CV_PhamHongTruong.pdf'));
 
@@ -326,6 +334,7 @@ export default function App() {
           <div className={`p-3 bg-slate-950 grid ${getGridCols(mediaUrls.length)} gap-3 border-b border-slate-900`}>
             {mediaUrls.map((url, index) => {
               const type = getMediaType(url);
+              const fixedUrl = fixImageUrl(url);
               return (
                 <div 
                   key={index} 
@@ -333,27 +342,28 @@ export default function App() {
                 >
                   {type === 'video' ? (
                     <video 
-                      src={url}
+                      src={fixedUrl}
                       controls
                       autoPlay={false}
                       muted
                       loop
                       className="w-full h-full object-cover"
+                      onError={(e) => console.error(`Failed to load video: ${fixedUrl}`, e)}
                     />
                   ) : (
                     <img 
-                      src={url} 
+                      src={fixedUrl} 
                       alt="" 
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
-                        console.error(`Failed to load image: ${url}`);
+                        console.error(`Failed to load image: ${fixedUrl}`);
                         (e.target as HTMLElement).style.display = 'none';
                       }}
                     />
                   )}
 
                   <button 
-                    onClick={() => setLightboxMedia({ url, type })}
+                    onClick={() => setLightboxMedia({ url: fixedUrl, type })}
                     className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/75 border border-slate-800 text-slate-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none"
                     title={t.media.zoom}
                   >
@@ -412,7 +422,6 @@ export default function App() {
 
   const suggestedQuestions = getSuggestedQuestions(language);
 
-  // Portfolio Projects Data
   const portfolioProjects = [
     {
       id: 1,
@@ -460,7 +469,7 @@ export default function App() {
   tech: ["NestJS", "MongoDB", "React", "React Native", "WebSocket"],
   backendGit: "https://github.com/Hongtruongbvn/socal-media-backend",
   frontendGit: "https://github.com/Hongtruongbvn/socal-media-frontend",
-  frontendDemo: "https://project1.truongbvn.online/"  // Chỉ còn frontend demo
+  frontendDemo: "https://project1.truongbvn.online/"
     },
     {
       id: 3,
@@ -500,7 +509,7 @@ export default function App() {
 
       <div className="relative w-full max-w-6xl h-screen sm:h-[780px] bg-slate-900/40 backdrop-blur-xl sm:rounded-2xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col md:flex-row">
         
-        {/* Sidebar - Updated with Portfolio Section */}
+        {/* Sidebar */}
         <div className="w-full md:w-[380px] bg-slate-950/80 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           <div className="p-5 space-y-5 flex-1">
             
@@ -549,7 +558,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Portfolio Projects Section - NEW */}
+            {/* Portfolio Projects Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Award size={14} className="text-amber-500" />
